@@ -947,24 +947,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp3"></div>
-      <button class="btn-primary" onclick="toggleDocUploadBar()"><i class="ti ti-plus"></i> Lisää dokumentti</button>
-      <!-- Upload-vaihtoehdot (avautuu napin alle) -->
-      <div id="doc-upload-bar" style="display:none;margin-top:8px">
-        <div style="background:var(--surface-container-low,#f4f3f0);border:1.5px solid var(--border,#e5e5e5);border-radius:14px;padding:10px;display:flex;gap:10px">
-          <button onclick="triggerDocUpload('file')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--surface,#faf9f6);border:1.5px solid var(--border,#e5e5e5);border-radius:10px;cursor:pointer;font-family:inherit">
-            <i class="ti ti-files" style="font-size:22px;color:var(--green-dark)"></i>
-            <span style="font-size:12px;font-weight:500;color:var(--text-2)">Tiedosto</span>
-          </button>
-          <button onclick="triggerDocUpload('image')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--surface,#faf9f6);border:1.5px solid var(--border,#e5e5e5);border-radius:10px;cursor:pointer;font-family:inherit">
-            <i class="ti ti-photo" style="font-size:22px;color:var(--blue)"></i>
-            <span style="font-size:12px;font-weight:500;color:var(--text-2)">Kuva</span>
-          </button>
-          <button onclick="triggerDocUpload('camera')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--surface,#faf9f6);border:1.5px solid var(--border,#e5e5e5);border-radius:10px;cursor:pointer;font-family:inherit">
-            <i class="ti ti-camera" style="font-size:22px;color:var(--amber)"></i>
-            <span style="font-size:12px;font-weight:500;color:var(--text-2)">Kamera</span>
-          </button>
-        </div>
-      </div>
+      <button class="btn-primary" onclick="triggerDocUpload('file')"><i class="ti ti-plus"></i> Lisää dokumentti</button>
       <!-- Edistymispalkki lataukselle -->
       <div id="doc-upload-progress" style="display:none;margin-top:10px">
         <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
@@ -1266,9 +1249,6 @@ function go(id, back = false) {
   document.querySelectorAll('.nav-btn[data-n]').forEach(b => b.classList.toggle('active', b.dataset.n === id));
   const sc = next.querySelector('.screen-scroll, .chat-scroll');
   if (sc) sc.scrollTop = 0;
-  // Sulje upload-palkki kun poistutaan dokumentit-näytöltä
-  const bar = document.getElementById('doc-upload-bar');
-  if (bar && id !== 'dokumentit') bar.style.display = 'none';
   // Lazy-load dokumenttilista kun välilehti avataan
   if (id === 'dokumentit') refreshDocList();
 }
@@ -1606,11 +1586,6 @@ function guessDocType(name) {
 }
 
 // ── Dokumenttien lataus UI ─────────────
-function toggleDocUploadBar() {
-  const bar = document.getElementById('doc-upload-bar');
-  bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
-}
-
 function triggerDocUpload(mode) {
   const input = document.getElementById('doc-file-input');
   if (mode === 'camera') {
