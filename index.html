@@ -1171,6 +1171,7 @@ window.addEventListener('load', async () => {
   }, 1600);
 
   if (session) {
+    appInitDone = true;
     currentUser = session.user;
     await loadProfileFromSupabase(session.user.id);
     await loadAnthropicKey();
@@ -1202,6 +1203,7 @@ const SUPA_URL  = 'https://gwumdjscrhikrcahakvz.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3dW1kanNjcmhpa3JjYWhha3Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0OTk0NTQsImV4cCI6MjA5NDA3NTQ1NH0.5dUCIiuxBdOTOuFgx13BF5pIlAmAJ9T-P6rXfiEyT3M';
 let supa = null;
 let currentUser = null;
+let appInitDone = false; // estetään kaksoiskäynnistys OAuth-paluun jälkeen
 
 function initSupabase() {
   supa = supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -1214,13 +1216,14 @@ function initSupabase() {
       document.getElementById('auth-form-newpass').style.display  = '';
     } else if (event === 'SIGNED_IN' && session) {
       currentUser = session.user;
-      // OAuth-paluu: jos auth-näyttö on vielä auki, vie käyttäjä eteenpäin
-      const authEl = document.getElementById('auth-screen');
-      if (authEl && authEl.style.display === 'flex') {
+      // OAuth-paluu: appInitDone = false tarkoittaa että load-handleri ei vielä käynnistänyt appia
+      if (!appInitDone) {
+        appInitDone = true;
         await afterAuth(session.user);
       }
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
+      appInitDone = false;
       document.getElementById('auth-screen').style.display = 'flex';
       authTab('login');
     }
