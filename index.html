@@ -649,7 +649,11 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
     <div class="onb-step" id="onb-s1">
       <div class="onb-h">Kodin perustiedot</div>
       <div class="onb-p" style="margin-bottom:8px">Kerro ensin perusasiat kodistasi.</div>
-      <div class="onb-label">Osoite</div>
+      <div style="display:flex;align-items:flex-start;gap:8px;background:var(--surface);border-radius:10px;padding:10px 12px;margin-bottom:14px">
+        <i class="ti ti-lock" style="font-size:15px;color:var(--green-accent);margin-top:1px;flex-shrink:0"></i>
+        <span style="font-size:12px;color:var(--text-2);line-height:1.5">Tietosi tallennetaan vain omaan käyttöösi – et sinä näe muiden tietoja, eikä kukaan muu näe sinun.</span>
+      </div>
+      <div class="onb-label">Osoite <span style="font-size:11px;color:var(--text-3);font-weight:400">(valinnainen)</span></div>
       <input class="onb-input" id="onb-address" type="text" placeholder="Esim. Koivukuja 4, Espoo" autocomplete="street-address"/>
       <div class="onb-label">Asuntotyyppi</div>
       <div class="onb-pills" id="onb-type-pills">
@@ -1487,11 +1491,15 @@ async function loadAnthropicKey() {
   // 2. Jaettu avain Supabase settings-taulusta (ei cacheta laitteelle)
   if (!supa) return;
   try {
-    const { data } = await supa.from('settings').select('value').eq('key', 'anthropic_key').maybeSingle();
+    const { data, error } = await supa.from('settings').select('value').eq('key', 'anthropic_key').maybeSingle();
+    if (error) { console.warn('Settings query error:', error); return; }
     if (data?.value) {
       ANTHROPIC_KEY = data.value;
       const el = document.getElementById('api-key-status');
       if (el) el.textContent = 'Jaettu avain ✓';
+      console.log('Anthropic key loaded from Supabase ✓');
+    } else {
+      console.warn('Anthropic key not found in settings table');
     }
   } catch(e) { console.warn('API key not in settings:', e); }
 }
@@ -2309,12 +2317,28 @@ async function runChat(text) {
       const reply = data.content[0].text;
       chatHistory.push({ role: 'assistant', content: reply });
       appendAiMsg(reply);
+    } else if (data.error) {
+      // Anthropic palautti virheen – näytetään tyyppi eikä jätetä käyttäjää ihmettelemään
+      const errType = data.error.type || '';
+      const errMsg  = data.error.message || '';
+      if (errType === 'authentication_error' || errMsg.includes('x-api-key')) {
+        appendErrMsg('API-avain virheellinen tai vanhentunut. Pyydä ylläpitäjää päivittämään avain.');
+      } else if (errType === 'rate_limit_error') {
+        appendErrMsg('Liian monta pyyntöä. Odota hetki ja yritä uudelleen.');
+      } else if (errType === 'overloaded_error') {
+        appendErrMsg('Palvelu on hetkellisesti ruuhkainen. Yritä pian uudelleen.');
+      } else {
+        appendErrMsg('Virhe: ' + (errMsg || errType || 'tuntematon'));
+      }
+      console.error('Anthropic API error:', data.error);
     } else {
       appendErrMsg('Jokin meni pieleen. Yritä uudelleen.');
+      console.error('Unexpected API response:', data);
     }
   } catch (e) {
     document.getElementById(typingId)?.remove();
     appendErrMsg('Yhteysvirhe. Tarkista internetyhteys.');
+    console.error('Chat fetch error:', e);
   }
 
   chatBusy = false;
