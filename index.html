@@ -4,11 +4,20 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Kotini</title>
+<meta name="description" content="Kodin hallinta yhdessä paikassa"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Kotini"/>
 <meta name="theme-color" content="#1B3320"/>
+<link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%231B3320'/%3E%3Ctext x='90' y='122' font-size='88' text-anchor='middle'%3E🏡%3C/text%3E%3C/svg%3E"/>
+<!-- Preconnect: nopeuttaa ulkoisten resurssien lataamista -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<link rel="preconnect" href="https://gwumdjscrhikrcahakvz.supabase.co"/>
+<link rel="preconnect" href="https://api.anthropic.com"/>
+<!-- Fontit yhdessä pyynnössä -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300..700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.29.0/dist/tabler-icons.min.css"/>
@@ -70,12 +79,12 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 @keyframes pulse { 0%,100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
 
 /* ── Screen system ─────────────────── */
-.screen { display: none; flex-direction: column; height: 100dvh; }
+.screen { display: none; flex-direction: column; height: 100dvh; will-change: transform; }
 .screen.active { display: flex; animation: slideIn 0.24s cubic-bezier(0.25,0.46,0.45,0.94) both; }
 .screen.active.goback { animation: slideInLeft 0.24s cubic-bezier(0.25,0.46,0.45,0.94) both; }
 @keyframes slideIn     { from { opacity:0; transform: translateX(18px); } to { opacity:1; transform: translateX(0); } }
 @keyframes slideInLeft { from { opacity:0; transform: translateX(-18px); } to { opacity:1; transform: translateX(0); } }
-.screen-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.screen-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 .screen-scroll::-webkit-scrollbar { display: none; }
 .pb-nav { padding-bottom: 76px; }
 
@@ -1259,16 +1268,29 @@ function go(id, back = false) {
   // Sulje upload-palkki kun poistutaan dokumentit-näytöltä
   const bar = document.getElementById('doc-upload-bar');
   if (bar && id !== 'dokumentit') bar.style.display = 'none';
+  // Lazy-load dokumenttilista kun välilehti avataan
+  if (id === 'dokumentit') refreshDocList();
 }
 
 // ── Splash ──────────────────────────
-window.addEventListener('load', () => {
-  initSupabase();
+let splashHidden = false;
+let splashReadyAt = 0; // aikaisin hetki jolloin splash voidaan piilottaa
 
+function hideSplash() {
+  if (splashHidden) return;
+  const wait = Math.max(0, splashReadyAt - Date.now());
   setTimeout(() => {
-    document.getElementById('splash').classList.add('out');
-    setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 520);
-  }, 1600);
+    if (splashHidden) return;
+    splashHidden = true;
+    const sp = document.getElementById('splash');
+    sp.classList.add('out');
+    setTimeout(() => { sp.style.display = 'none'; }, 520);
+  }, wait);
+}
+
+window.addEventListener('load', () => {
+  splashReadyAt = Date.now() + 900; // min 900ms brändisyistä
+  initSupabase();
 });
 
 // ── Pills ───────────────────────────
@@ -1303,11 +1325,13 @@ function initSupabase() {
       appInitDone = true;
       currentUser = session.user;
       await afterAuth(session.user);
+      hideSplash();
     } else if (event === 'INITIAL_SESSION' && !session && !appInitDone) {
-      // Ei sessiota — näytä auth kirjautumisen jälkeen splash
+      // Ei sessiota — piilota splash ja näytä kirjautuminen
+      hideSplash();
       setTimeout(() => {
         document.getElementById('auth-screen').style.display = 'flex';
-      }, 1700);
+      }, 100);
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       appInitDone = false;
@@ -1538,8 +1562,36 @@ async function uploadDocument(file) {
 async function loadDocuments() {
   if (!supa || !currentUser) return [];
   const { data } = await supa.from('documents')
-    .select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    .select('*').eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .range(0, 49); // max 50 kerralla
   return data || [];
+}
+
+async function refreshDocList() {
+  const docList = document.getElementById('doc-list');
+  const docSub  = document.getElementById('dokumentit-sub');
+  const docStatEl = document.getElementById('stat-dokumentit');
+  if (!docList) return;
+  docList.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px">Ladataan…</div>';
+  let docs = [];
+  try { docs = await loadDocuments(); } catch(e) { console.error('loadDocuments:', e); }
+  const cnt = docs.length;
+  if (docSub) docSub.textContent = cnt + ' tiedostoa';
+  if (docStatEl) docStatEl.textContent = cnt;
+  if (cnt === 0) {
+    docList.innerHTML = emptyState('files', 'Ei dokumentteja vielä.<br>Lisää tärkeitä tiedostoja talteen.');
+  } else {
+    const iconFor  = mime => mime && mime.startsWith('image/') ? 'photo' : 'file-type-pdf';
+    const colorFor = mime => mime && mime.startsWith('image/') ? 'var(--blue)' : 'var(--coral)';
+    const fmt = d => new Date(d).toLocaleDateString('fi-FI');
+    docList.innerHTML = `<div class="list-card">${docs.map(doc => `
+      <div class="list-row">
+        <div class="doc-icon" style="color:${colorFor(doc.mime_type)}"><i class="ti ti-${iconFor(doc.mime_type)}"></i></div>
+        <div style="flex:1;min-width:0"><div class="doc-name">${doc.name}</div><div class="doc-meta">${doc.type || 'Dokumentti'} · ${fmt(doc.created_at)}</div></div>
+        <i class="ti ti-chevron-right chev"></i>
+      </div>`).join('')}</div>`;
+  }
 }
 
 function guessDocType(name) {
@@ -1596,7 +1648,7 @@ async function handleDocUpload(input) {
   setTimeout(() => { prog.style.display = 'none'; progBar.style.width = '0%'; }, 2000);
 
   input.value = ''; // reset niin sama tiedosto voidaan lisätä uudelleen
-  await renderScreens(); // päivitä lista
+  await refreshDocList(); // päivitä lista
 }
 
 // ── Kuvan pakkaus ──────────────────────
@@ -1733,16 +1785,19 @@ function onbToggleDoc(el) {
 
 function onbPhotoSelected(input) {
   const file = input.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    onbData.photo = e.target.result;
-    const area = document.getElementById('onb-photo-area');
-    document.getElementById('onb-photo-inner').style.display = 'none';
-    let img = area.querySelector('img');
-    if (!img) { img = document.createElement('img'); img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px'; area.appendChild(img); }
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+  // Pakkaa kuva ennen tallennusta: max 600px, quality 0.72 → ~20–35 KB
+  compressImage(file, 600, 0.72).then(blob => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      onbData.photo = e.target.result;
+      const area = document.getElementById('onb-photo-area');
+      document.getElementById('onb-photo-inner').style.display = 'none';
+      let img = area.querySelector('img');
+      if (!img) { img = document.createElement('img'); img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px'; area.appendChild(img); }
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(blob || file);
+  });
 }
 
 function buildOnbSummary() {
@@ -1856,29 +1911,10 @@ async function renderScreens() {
   }
   if (document.getElementById('stat-laitteet')) document.getElementById('stat-laitteet').textContent = devCount;
 
-  // ── Dokumentit (aidot Supabasesta) ──
+  // ── Dokumentit: lazy-load — haetaan vasta kun välilehteä katsotaan ──
   const docList = document.getElementById('doc-list');
-  const docSub  = document.getElementById('dokumentit-sub');
-  const docStatEl = document.getElementById('stat-dokumentit');
-  if (docList) {
-    let docs = [];
-    try { docs = await loadDocuments(); } catch(e) { console.error('loadDocuments:', e); }
-    const cnt = docs.length;
-    if (docSub) docSub.textContent = cnt + ' tiedostoa';
-    if (docStatEl) docStatEl.textContent = cnt;
-    if (cnt === 0) {
-      docList.innerHTML = emptyState('files', 'Ei dokumentteja vielä.<br>Lisää tärkeitä tiedostoja talteen.');
-    } else {
-      const iconFor = mime => mime && mime.startsWith('image/') ? 'photo' : 'file-type-pdf';
-      const colorFor = mime => mime && mime.startsWith('image/') ? 'var(--blue)' : 'var(--coral)';
-      const fmt = d => new Date(d).toLocaleDateString('fi-FI');
-      docList.innerHTML = `<div class="list-card">${docs.map(doc => `
-        <div class="list-row">
-          <div class="doc-icon" style="color:${colorFor(doc.mime_type)}"><i class="ti ti-${iconFor(doc.mime_type)}"></i></div>
-          <div style="flex:1;min-width:0"><div class="doc-name">${doc.name}</div><div class="doc-meta">${doc.type || 'Dokumentti'} · ${fmt(doc.created_at)}</div></div>
-          <i class="ti ti-chevron-right chev"></i>
-        </div>`).join('')}</div>`;
-    }
+  if (docList && docList.innerHTML.trim() === '') {
+    docList.innerHTML = emptyState('files', 'Ei dokumentteja vielä.<br>Lisää tärkeitä tiedostoja talteen.');
   }
 
   // ── Kulut ──
