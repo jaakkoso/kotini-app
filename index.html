@@ -1105,10 +1105,11 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
     <div><div class="back-title">Profiili</div><div class="back-sub">Kotisi tiedot</div></div>
   </div>
   <div class="screen-scroll" style="padding-bottom:28px">
-    <div class="profile-hero" id="profile-hero">
+    <div class="profile-hero" id="profile-hero" onclick="openEditProfile()" style="cursor:pointer">
+      <div style="position:absolute;top:14px;right:14px;opacity:0.55"><i class="ti ti-pencil" style="font-size:17px;color:white"></i></div>
       <div class="profile-avatar" id="profile-avatar">🏡</div>
       <div class="profile-name" id="profile-name">Kotini</div>
-      <div class="profile-addr" id="profile-addr"><i class="ti ti-map-pin" style="font-size:13px"></i> <span id="profile-addr-txt">Täytä profiili</span></div>
+      <div class="profile-addr" id="profile-addr"><i class="ti ti-map-pin" style="font-size:13px"></i> <span id="profile-addr-txt">Napauta muokataksesi</span></div>
       <div class="profile-meta" id="profile-meta">
         <span class="prof-chip" id="prof-area">—</span>
         <span class="prof-chip" id="prof-built">—</span>
@@ -1131,6 +1132,11 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
     <div class="menu-section">
       <div class="menu-label">Asetukset</div>
       <div class="menu-list">
+        <div class="menu-row" onclick="openApiKeyModal()">
+          <div class="menu-icon" style="background:var(--green-light);color:var(--green-accent)"><i class="ti ti-key"></i></div>
+          <div style="flex:1"><div class="menu-text">Kotiapuri API-avain</div><div class="menu-sub" id="api-key-status">Ei asetettu</div></div>
+          <i class="ti ti-chevron-right chev"></i>
+        </div>
         <div class="menu-row">
           <div class="menu-icon" style="background:var(--blue-light);color:var(--blue)"><i class="ti ti-bell"></i></div>
           <div style="flex:1"><div class="menu-text">Hälytykset ja muistutukset</div></div>
@@ -1191,11 +1197,27 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 <div class="bottom-sheet" id="bsh">
   <div class="sh-handle"></div>
   <div class="sh-head"><span class="sh-label">Lisää uusi</span><div class="sh-close" onclick="closeSheet()"><i class="ti ti-x"></i></div></div>
-  <div class="sh-item" onclick="closeSheet()"><div class="sh-icon" style="background:var(--green-light)"><i class="ti ti-tool" style="color:var(--green-accent)"></i></div><span class="sh-text">Lisää huoltotyö</span></div>
-  <div class="sh-item" onclick="closeSheet()"><div class="sh-icon" style="background:var(--blue-light)"><i class="ti ti-file-plus" style="color:var(--blue)"></i></div><span class="sh-text">Lisää dokumentti</span></div>
-  <div class="sh-item" onclick="closeSheet()"><div class="sh-icon" style="background:var(--amber-light)"><i class="ti ti-cpu" style="color:var(--amber)"></i></div><span class="sh-text">Lisää laite</span></div>
-  <div class="sh-item" onclick="closeSheet()"><div class="sh-icon" style="background:var(--coral-light)"><i class="ti ti-credit-card" style="color:var(--coral)"></i></div><span class="sh-text">Lisää kulu</span></div>
-  <div class="sh-item" onclick="closeSheet()"><div class="sh-icon" style="background:var(--surface)"><i class="ti ti-note" style="color:var(--text-2)"></i></div><span class="sh-text">Lisää muistiinpano</span></div>
+  <div class="sh-item" onclick="closeSheet();openAddTask()"><div class="sh-icon" style="background:var(--green-light)"><i class="ti ti-tool" style="color:var(--green-accent)"></i></div><span class="sh-text">Lisää huoltotyö</span></div>
+  <div class="sh-item" onclick="closeSheet();triggerDocUpload('file')"><div class="sh-icon" style="background:var(--blue-light)"><i class="ti ti-file-plus" style="color:var(--blue)"></i></div><span class="sh-text">Lisää dokumentti</span></div>
+  <div class="sh-item" onclick="closeSheet();openAddDevice()"><div class="sh-icon" style="background:var(--amber-light)"><i class="ti ti-cpu" style="color:var(--amber)"></i></div><span class="sh-text">Lisää laite</span></div>
+  <div class="sh-item" onclick="closeSheet();openAddExpense()"><div class="sh-icon" style="background:var(--coral-light)"><i class="ti ti-credit-card" style="color:var(--coral)"></i></div><span class="sh-text">Lisää kulu</span></div>
+  <div class="sh-item" onclick="closeSheet();openAddTask()"><div class="sh-icon" style="background:var(--surface)"><i class="ti ti-calendar-plus" style="color:var(--text-2)"></i></div><span class="sh-text">Lisää muistutus</span></div>
+</div>
+
+<!-- ════════════════════════════
+     FORM MODAL (generic)
+════════════════════════════ -->
+<div class="modal-bg" id="fmod-bg" onclick="if(event.target===this)closeFmod()">
+  <div class="modal-sheet" id="fmod-sheet" style="padding-bottom:env(safe-area-inset-bottom,20px)">
+    <div class="modal-drag"></div>
+    <div class="modal-top">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--green-dark)" id="fmod-title">Lisää</div>
+      <div class="modal-close" onclick="closeFmod()"><i class="ti ti-x"></i></div>
+    </div>
+    <div id="fmod-body" style="margin-bottom:16px"></div>
+    <div id="fmod-err" style="display:none;background:var(--coral-light);border:1px solid rgba(196,58,42,.2);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--coral);margin-bottom:12px"></div>
+    <button class="btn-primary" id="fmod-btn" onclick="fmodSubmit()">Tallenna</button>
+  </div>
 </div>
 
 <!-- ════════════════════════════
@@ -1454,47 +1476,69 @@ async function afterAuth(user) {
 }
 
 async function loadAnthropicKey() {
+  // 1. localStorage ensin (nopein, toimii offline)
+  const stored = localStorage.getItem('kotini_anthropic_key');
+  if (stored) {
+    ANTHROPIC_KEY = stored;
+    const el = document.getElementById('api-key-status');
+    if (el) el.textContent = 'Asetettu ✓';
+    return;
+  }
+  // 2. Supabase settings-taulu (admin asettaa jaetun avaimen)
   if (!supa) return;
-  const { data } = await supa.from('settings').select('value').eq('key', 'anthropic_key').single();
-  if (data) ANTHROPIC_KEY = data.value;
+  try {
+    const { data } = await supa.from('settings').select('value').eq('key', 'anthropic_key').maybeSingle();
+    if (data?.value) {
+      ANTHROPIC_KEY = data.value;
+      localStorage.setItem('kotini_anthropic_key', data.value);
+      const el = document.getElementById('api-key-status');
+      if (el) el.textContent = 'Asetettu ✓';
+    }
+  } catch(e) { console.warn('API key not in settings:', e); }
 }
 
 // ── Supabase data ─────────────────────
 async function loadProfileFromSupabase(userId) {
   if (!supa) return;
+  // Lue ensin localStorage jotta data on heti käytettävissä
+  const localSaved = localStorage.getItem('kotini_profile');
+  let localData = null;
+  if (localSaved) { try { localData = JSON.parse(localSaved); } catch(e) {} }
+
   try {
     const { data, error } = await supa.from('profiles').select('*').eq('id', userId).single();
     if (data && !error) {
       onbData = {
-        photo:    data.photo_url || null,
-        address:  data.address   || '',
-        type:     data.type      || '',
-        built:    data.built     ? String(data.built) : '',
-        area:     data.area      ? String(data.area)  : '',
-        heating:  data.heating   || '',
-        wall:     data.wall      || '',
-        water:    data.water     || '',
-        devices:  data.devices   || [],
-        docs:     data.docs      || [],
+        photo:    data.photo_url  || null,
+        address:  data.address    || '',
+        type:     data.type       || '',
+        built:    data.built      ? String(data.built) : '',
+        area:     data.area       ? String(data.area)  : '',
+        heating:  data.heating    || '',
+        wall:     data.wall       || '',
+        water:    data.water      || '',
+        devices:  data.devices    || [],
+        docs:     data.docs       || [],
+        // Uudet kentät: supabasessa voi puuttua, fallback localStoragesta
+        expenses: data.expenses   || localData?.expenses || [],
+        tasks:    data.tasks      || localData?.tasks    || [],
       };
-      // Päivitä localStorage-välimuisti
       localStorage.setItem('kotini_profile', JSON.stringify(onbData));
       return;
     }
   } catch(e) {
-    console.warn('loadProfileFromSupabase failed, trying localStorage:', e);
+    console.warn('loadProfileFromSupabase failed, falling back to localStorage:', e);
   }
-  // Fallback: lue localStorage jos Supabase ei vastaa
-  const saved = localStorage.getItem('kotini_profile');
-  if (saved) {
-    try { onbData = JSON.parse(saved); } catch(e) {}
-  }
+  // Fallback: käytä localStoragea
+  if (localData) onbData = { ...{ expenses:[], tasks:[] }, ...localData };
 }
 
 async function saveProfileToSupabase() {
   if (!supa || !currentUser) return;
   const d = onbData;
-  await supa.from('profiles').upsert({
+  // Tallenna ensin localStorage (toimii aina)
+  localStorage.setItem('kotini_profile', JSON.stringify(d));
+  const base = {
     id:        currentUser.id,
     address:   d.address  || null,
     type:      d.type     || null,
@@ -1504,10 +1548,18 @@ async function saveProfileToSupabase() {
     wall:      d.wall     || null,
     water:     d.water    || null,
     photo_url: d.photo    || null,
-    devices:   d.devices,
-    docs:      d.docs,
+    devices:   d.devices  || [],
+    docs:      d.docs     || [],
     updated_at: new Date().toISOString()
+  };
+  // Yritä tallentaa myös expenses + tasks; jos sarakkeet puuttuu, yritä ilman niitä
+  const { error } = await supa.from('profiles').upsert({
+    ...base, expenses: d.expenses || [], tasks: d.tasks || []
   });
+  if (error) {
+    console.warn('Full upsert failed (new columns missing?), retrying base:', error.message);
+    await supa.from('profiles').upsert(base);
+  }
 }
 
 // ── Document upload ────────────────────
@@ -1687,7 +1739,7 @@ function compressImage(file, maxPx = 1400, quality = 0.78) {
 // ── Kirjaudu ulos ──────────────────────
 async function signOut() {
   if (supa) await supa.auth.signOut();
-  onbData = { photo:null, address:'', type:'', built:'', area:'', heating:'', wall:'', water:'', devices:[], docs:[] };
+  onbData = { photo:null, address:'', type:'', built:'', area:'', heating:'', wall:'', water:'', devices:[], docs:[], expenses:[], tasks:[] };
   localStorage.removeItem('kotini_profile');
   currentUser = null;
   // Reload-näyttö
@@ -1695,7 +1747,7 @@ async function signOut() {
 }
 
 // ── Onboarding ───────────────────────
-let onbData = { photo:null, address:'', type:'', built:'', area:'', heating:'', wall:'', water:'', devices:[], docs:[] };
+let onbData = { photo:null, address:'', type:'', built:'', area:'', heating:'', wall:'', water:'', devices:[], docs:[], expenses:[], tasks:[] };
 let onbIdx = 0;
 const ONB_STEPS = 7; // 0–6
 
@@ -1872,6 +1924,9 @@ async function applyProfile() {
     av.style.cssText = `background-image:url(${d.photo});background-size:cover;background-position:center;font-size:0;width:80px;height:80px;border-radius:20px;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,0.15)`;
     av.textContent = '';
   }
+  // Päivitä API-avain-status profiilisivulla
+  const apiEl = document.getElementById('api-key-status');
+  if (apiEl) apiEl.textContent = ANTHROPIC_KEY ? 'Asetettu ✓' : 'Ei asetettu';
   await renderScreens();
   loadTip(); // kutsutaan aina kun profiili ladataan tai päivitetään
 }
@@ -1964,18 +2019,90 @@ async function renderScreens() {
 
   // ── Kulut ──
   const expList = document.getElementById('expense-list');
-  if (expList) expList.innerHTML = emptyState('receipt-2', 'Ei kuluja vielä.<br>Lisää toistuvat kulut alla.');
+  const expenses = onbData.expenses || [];
+  if (expList) {
+    if (!expenses.length) {
+      expList.innerHTML = emptyState('receipt-2', 'Ei kuluja vielä.<br>Lisää toistuvat kulut alla.');
+    } else {
+      const FREQ_FI = { kuukausittain:'kuukausittain', vuosittain:'vuosittain', neljännesvuosi:'neljännesvuosi', kertamaksu:'kertamaksu' };
+      expList.innerHTML = `<div class="list-card">${expenses.map((exp,i) => `
+        <div class="list-row">
+          <div class="exp-dot" style="background:${['var(--green-accent)','var(--amber)','var(--coral)','var(--blue)'][i%4]}"></div>
+          <div style="flex:1"><div class="exp-name">${exp.name}</div><div class="exp-freq">${FREQ_FI[exp.freq]||exp.freq||''}</div></div>
+          <div style="text-align:right">
+            <div class="exp-amount">${exp.amount} €</div>
+            <span class="badge ${exp.paid?'b-green':'b-gray'}" onclick="toggleExpensePaid(${exp.id})" style="cursor:pointer">${exp.paid?'Maksettu':'Avoin'}</span>
+          </div>
+        </div>`).join('')}</div>`;
+    }
+  }
+  // Laske kuukausittainen yhteissumma
+  let monthly = 0;
+  expenses.forEach(e => {
+    const a = parseFloat(e.amount)||0;
+    if (e.freq==='kuukausittain')  monthly += a;
+    else if (e.freq==='vuosittain') monthly += a/12;
+    else if (e.freq==='neljännesvuosi') monthly += a/3;
+    else if (e.freq==='kertamaksu') monthly += a;
+  });
+  const kulutTotal = document.getElementById('kulut-total');
+  if (kulutTotal) kulutTotal.textContent = Math.round(monthly) + ' €';
+  const statKulut = document.getElementById('stat-kulut');
+  if (statKulut) statKulut.textContent = Math.round(monthly) + ' €';
+  const kulutVuosi = document.getElementById('kulut-vuosi');
+  if (kulutVuosi && expenses.length) kulutVuosi.textContent = 'Vuosiarvio ' + Math.round(monthly*12) + ' €';
+
+  // ── Tehtävät (koti-näyttö) ──
+  const tasks = onbData.tasks || [];
+  const taskCont = document.getElementById('task-list-container');
+  if (taskCont) {
+    const upcoming = tasks.filter(t=>!t.done).sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+    if (!upcoming.length) {
+      taskCont.innerHTML = emptyState('checklist', 'Ei tulevia tehtäviä.<br>Kotiapuri voi ehdottaa huoltoja.');
+    } else {
+      const todayMs = new Date().setHours(0,0,0,0);
+      taskCont.innerHTML = `<div class="list-card">${upcoming.map(t => {
+        const dMs = t.date ? new Date(t.date).getTime() : null;
+        const late = dMs && dMs < todayMs;
+        const dot = late ? 'dot-red' : 'dot-amber';
+        const dateStr = t.date ? new Date(t.date).toLocaleDateString('fi-FI') : '';
+        return `<div class="list-row">
+          <div class="dot ${dot}"></div>
+          <div style="flex:1"><div class="task-name">${t.name}</div><div class="task-sub">${t.type||'Huolto'}${dateStr?' · '+dateStr:''}</div></div>
+          ${late?'<span class="badge b-red">Myöhässä</span>':''}
+        </div>`;
+      }).join('')}</div>`;
+    }
+  }
+  const statTeht = document.getElementById('stat-tehtavat');
+  if (statTeht) statTeht.textContent = tasks.filter(t=>!t.done).length;
 
   // ── Kalenteri ──
   const calList = document.getElementById('cal-list');
-  if (calList) calList.innerHTML = emptyState('calendar', 'Ei tulevia tapahtumia.<br>Lisää huoltoja ja muistutuksia.');
-
-  // ── Tehtävät (koti-näyttö) ──
-  const taskCont = document.getElementById('task-list-container');
-  if (taskCont) taskCont.innerHTML = emptyState('checklist', 'Ei tulevia tehtäviä.<br>Kotiapuri voi ehdottaa huoltoja.');
-  // Päivitä avoinna olevien tehtävien laskuri (0 kunnes tehtäviä tallennetaan)
-  const statTeht = document.getElementById('stat-tehtavat');
-  if (statTeht) statTeht.textContent = '0';
+  if (calList) {
+    if (!tasks.length) {
+      calList.innerHTML = emptyState('calendar', 'Ei tulevia tapahtumia.<br>Lisää huoltoja ja muistutuksia.');
+    } else {
+      const sorted = [...tasks].sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+      const barColor = t => t.type==='Lasku'?'var(--coral)':t.type==='Muistutus'?'var(--amber)':'var(--green-accent)';
+      calList.innerHTML = `<div class="list-card">${sorted.map(t => {
+        const dateStr = t.date ? new Date(t.date).toLocaleDateString('fi-FI',{day:'numeric',month:'long'}) : 'Ei päivämäärää';
+        return `<div class="cal-row" id="cr-${t.id}">
+          <div class="cal-bar" style="background:${barColor(t)}"></div>
+          <div class="cal-body">
+            <div class="cal-check${t.done?' checked':''}" id="cc-${t.id}" onclick="toggleTask(${t.id})">
+              ${t.done?'<i class="ti ti-check" style="font-size:13px"></i>':''}
+            </div>
+            <div class="cal-info">
+              <div class="cal-name${t.done?' done':''}" id="cn-${t.id}">${t.name}</div>
+              <div class="cal-sub">${t.type||'Huolto'}</div>
+              <div class="cal-date"><i class="ti ti-calendar" style="font-size:12px"></i> ${dateStr}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+    }
+  }
 }
 
 // ── Laite-detalji ──────────────────
@@ -2278,6 +2405,233 @@ function mdToHtml(t) {
   return t;
 }
 
+// ══════════════════════════════════════
+// FORM MODAL – geneerinen lomakemodaali
+// ══════════════════════════════════════
+let fmodAction = null;
+
+function openFmod(title, bodyHtml, action, btnLabel) {
+  document.getElementById('fmod-title').textContent = title;
+  document.getElementById('fmod-body').innerHTML = bodyHtml;
+  document.getElementById('fmod-btn').textContent = btnLabel || 'Tallenna';
+  document.getElementById('fmod-err').style.display = 'none';
+  fmodAction = action;
+  document.getElementById('fmod-bg').classList.add('open');
+}
+function closeFmod() {
+  document.getElementById('fmod-bg').classList.remove('open');
+  fmodAction = null;
+}
+function fmodErr(msg) {
+  const el = document.getElementById('fmod-err');
+  el.textContent = msg; el.style.display = 'block';
+}
+function fmodSubmit() { if (fmodAction) fmodAction(); }
+
+// Pill-valitsin formissa
+function fmodPill(el, groupId) {
+  document.querySelectorAll('#'+groupId+' .onb-pill').forEach(p=>p.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ── Lisää laite ──────────────────────
+function openAddDevice() {
+  openFmod('Lisää laite', `
+    <div class="auth-label">Laitteen nimi *</div>
+    <input class="auth-input" id="fd-dev-name" type="text" placeholder="esim. Pyykinpesukone"/>
+    <div class="auth-label">Merkki / malli</div>
+    <input class="auth-input" id="fd-dev-brand" type="text" placeholder="esim. Bosch WAU28T80"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div class="auth-label">Asennusvuosi</div>
+        <input class="auth-input" id="fd-dev-year" type="number" placeholder="2021" min="1900" max="2030"/></div>
+      <div><div class="auth-label">Takuu päättyy</div>
+        <input class="auth-input" id="fd-dev-warranty" type="date"/></div>
+    </div>
+  `, saveDevice);
+}
+
+async function saveDevice() {
+  const name = (document.getElementById('fd-dev-name').value||'').trim();
+  if (!name) { fmodErr('Anna laitteelle nimi.'); return; }
+  const dev = {
+    id: Date.now(),
+    name,
+    brand:      (document.getElementById('fd-dev-brand').value||'').trim()||null,
+    year:       document.getElementById('fd-dev-year').value||null,
+    warrantyEnd:document.getElementById('fd-dev-warranty').value||null,
+  };
+  if (!onbData.devices) onbData.devices = [];
+  onbData.devices.push(dev);
+  closeFmod();
+  await saveProfileToSupabase().catch(e=>console.error(e));
+  await renderScreens();
+}
+
+// ── Lisää kulu ───────────────────────
+function openAddExpense() {
+  openFmod('Lisää kulu', `
+    <div class="auth-label">Nimi *</div>
+    <input class="auth-input" id="fd-exp-name" type="text" placeholder="esim. Sähkö"/>
+    <div class="auth-label">Summa (€) *</div>
+    <input class="auth-input" id="fd-exp-amount" type="number" placeholder="esim. 120" min="0" step="0.01"/>
+    <div class="auth-label">Toistuvuus</div>
+    <div class="onb-pills" id="fd-exp-freq" style="margin-bottom:14px">
+      <div class="onb-pill sel" data-val="kuukausittain" onclick="fmodPill(this,'fd-exp-freq')">Kuukausittain</div>
+      <div class="onb-pill" data-val="vuosittain" onclick="fmodPill(this,'fd-exp-freq')">Vuosittain</div>
+      <div class="onb-pill" data-val="neljännesvuosi" onclick="fmodPill(this,'fd-exp-freq')">Neljännesvuosi</div>
+      <div class="onb-pill" data-val="kertamaksu" onclick="fmodPill(this,'fd-exp-freq')">Kertamaksu</div>
+    </div>
+    <div class="auth-label">Eräpäivä (valinnainen)</div>
+    <input class="auth-input" id="fd-exp-due" type="date"/>
+  `, saveExpense);
+}
+
+async function saveExpense() {
+  const name   = (document.getElementById('fd-exp-name').value||'').trim();
+  const amount = parseFloat(document.getElementById('fd-exp-amount').value);
+  if (!name)           { fmodErr('Anna kulun nimi.'); return; }
+  if (isNaN(amount)||amount<0) { fmodErr('Anna kelvollinen summa.'); return; }
+  const freqEl = document.querySelector('#fd-exp-freq .onb-pill.sel');
+  const exp = {
+    id:   Date.now(),
+    name, amount,
+    freq: freqEl ? freqEl.dataset.val : 'kuukausittain',
+    due:  document.getElementById('fd-exp-due').value||null,
+    paid: false
+  };
+  if (!onbData.expenses) onbData.expenses = [];
+  onbData.expenses.push(exp);
+  closeFmod();
+  await saveProfileToSupabase().catch(e=>console.error(e));
+  await renderScreens();
+}
+
+async function toggleExpensePaid(id) {
+  const exp = (onbData.expenses||[]).find(e=>e.id===id);
+  if (!exp) return;
+  exp.paid = !exp.paid;
+  await saveProfileToSupabase().catch(e=>console.error(e));
+  await renderScreens();
+}
+
+// ── Lisää tehtävä ────────────────────
+function openAddTask() {
+  const today = new Date().toISOString().split('T')[0];
+  openFmod('Lisää tehtävä', `
+    <div class="auth-label">Tehtävä *</div>
+    <input class="auth-input" id="fd-task-name" type="text" placeholder="esim. Öljypolttimen huolto"/>
+    <div class="auth-label">Päivämäärä</div>
+    <input class="auth-input" id="fd-task-date" type="date" value="${today}"/>
+    <div class="auth-label">Tyyppi</div>
+    <div class="onb-pills" id="fd-task-type" style="margin-bottom:4px">
+      <div class="onb-pill sel" data-val="Huolto" onclick="fmodPill(this,'fd-task-type')">Huolto</div>
+      <div class="onb-pill" data-val="Lasku" onclick="fmodPill(this,'fd-task-type')">Lasku</div>
+      <div class="onb-pill" data-val="Muistutus" onclick="fmodPill(this,'fd-task-type')">Muistutus</div>
+    </div>
+  `, saveTask);
+}
+
+async function saveTask() {
+  const name = (document.getElementById('fd-task-name').value||'').trim();
+  if (!name) { fmodErr('Anna tehtävälle nimi.'); return; }
+  const typeEl = document.querySelector('#fd-task-type .onb-pill.sel');
+  const task = {
+    id:   Date.now(),
+    name,
+    date: document.getElementById('fd-task-date').value||null,
+    type: typeEl ? typeEl.dataset.val : 'Huolto',
+    done: false
+  };
+  if (!onbData.tasks) onbData.tasks = [];
+  onbData.tasks.push(task);
+  closeFmod();
+  await saveProfileToSupabase().catch(e=>console.error(e));
+  await renderScreens();
+}
+
+async function toggleTask(id) {
+  const task = (onbData.tasks||[]).find(t=>t.id===id);
+  if (!task) return;
+  task.done = !task.done;
+  // Päivitä UI heti ilman renderScreens (nopeampi)
+  const check = document.getElementById('cc-'+id);
+  const name  = document.getElementById('cn-'+id);
+  if (check) { check.classList.toggle('checked',task.done); check.innerHTML = task.done?'<i class="ti ti-check" style="font-size:13px"></i>':''; }
+  if (name)  name.classList.toggle('done', task.done);
+  const statTeht = document.getElementById('stat-tehtavat');
+  if (statTeht) statTeht.textContent = (onbData.tasks||[]).filter(t=>!t.done).length;
+  await saveProfileToSupabase().catch(e=>console.error(e));
+}
+
+// ── Muokkaa profiilia ────────────────
+function openEditProfile() {
+  const d = onbData;
+  const types = ['Omakotitalo','Rivitalo','Kerrostalo','Paritalo'];
+  const heats = ['Öljylämmitys','Kaukolämpö','Maalämpö','Ilmalämpöpumppu','Sähkölämmitys','Puulämmitys','Pelletti'];
+  openFmod('Muokkaa profiilia', `
+    <div class="auth-label">Osoite</div>
+    <input class="auth-input" id="fd-pr-addr" type="text" value="${d.address||''}" placeholder="Koivukuja 4, Espoo"/>
+    <div class="auth-label">Asuntotyyppi</div>
+    <div class="onb-pills" id="fd-pr-type" style="margin-bottom:14px">
+      ${types.map(t=>`<div class="onb-pill${d.type===t?' sel':''}" data-val="${t}" onclick="fmodPill(this,'fd-pr-type')">${t}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
+      <div><div class="auth-label">Rakennusvuosi</div>
+        <input class="auth-input" id="fd-pr-built" type="number" value="${d.built||''}" placeholder="1998" min="1800" max="2030"/></div>
+      <div><div class="auth-label">Pinta-ala m²</div>
+        <input class="auth-input" id="fd-pr-area" type="number" value="${d.area||''}" placeholder="120"/></div>
+    </div>
+    <div class="auth-label">Lämmitysmuoto</div>
+    <div class="onb-pills" id="fd-pr-heat" style="margin-bottom:4px">
+      ${heats.map(h=>`<div class="onb-pill${d.heating===h?' sel':''}" data-val="${h}" onclick="fmodPill(this,'fd-pr-heat')">${h}</div>`).join('')}
+    </div>
+  `, saveEditProfile);
+}
+
+async function saveEditProfile() {
+  const addr   = (document.getElementById('fd-pr-addr').value||'').trim();
+  const typeEl = document.querySelector('#fd-pr-type .onb-pill.sel');
+  const heatEl = document.querySelector('#fd-pr-heat .onb-pill.sel');
+  onbData.address = addr || onbData.address;
+  if (typeEl) onbData.type    = typeEl.dataset.val;
+  const builtVal = document.getElementById('fd-pr-built').value;
+  const areaVal  = document.getElementById('fd-pr-area').value;
+  if (builtVal) onbData.built = builtVal;
+  if (areaVal)  onbData.area  = areaVal;
+  if (heatEl) onbData.heating = heatEl.dataset.val;
+  closeFmod();
+  await saveProfileToSupabase().catch(e=>console.error(e));
+  await applyProfile();
+}
+
+// ── API-avain (Kotiapuri) ────────────
+function openApiKeyModal() {
+  const current = localStorage.getItem('kotini_anthropic_key')||'';
+  openFmod('Kotiapuri API-avain', `
+    <div style="font-size:13px;color:var(--text-2);line-height:1.55;margin-bottom:14px">
+      Liitä tähän Anthropic-tilin API-avain. Avain tallennetaan vain tähän laitteeseen, ei palvelimelle.
+    </div>
+    <div class="auth-label">API-avain (sk-ant-...)</div>
+    <input class="auth-input" id="fd-apikey" type="password" value="${current}" placeholder="sk-ant-api03-…" autocomplete="off"/>
+    ${current?'<div style="font-size:12px;color:var(--green-accent);margin-top:-8px;margin-bottom:8px">✓ Avain on jo asetettu</div>':''}
+    <div style="font-size:12px;color:var(--text-3);margin-top:6px">Voit hankkia avaimen osoitteesta console.anthropic.com</div>
+  `, saveApiKey, 'Tallenna avain');
+}
+
+function saveApiKey() {
+  const val = (document.getElementById('fd-apikey').value||'').trim();
+  if (val) {
+    ANTHROPIC_KEY = val;
+    localStorage.setItem('kotini_anthropic_key', val);
+  } else {
+    ANTHROPIC_KEY = null;
+    localStorage.removeItem('kotini_anthropic_key');
+  }
+  const el = document.getElementById('api-key-status');
+  if (el) el.textContent = val ? 'Asetettu ✓' : 'Ei asetettu';
+  closeFmod();
+}
+
 // ── Bottom sheet ────────────────────
 function openSheet() {
   document.getElementById('sov').classList.add('open');
@@ -2317,14 +2671,17 @@ function fixNav() {
   const app = document.getElementById('app');
   const nav = document.getElementById('bottom-nav');
   const bsh = document.getElementById('bsh');
+  const fsh = document.getElementById('fmod-sheet');
   if (window.innerWidth >= 500) {
     const r = app.getBoundingClientRect();
     nav.style.left = r.left + 'px'; nav.style.width = r.width + 'px'; nav.style.transform = 'none';
     bsh.style.left = r.left + 'px'; bsh.style.width = r.width + 'px';
     bsh.style.transform = bsh.classList.contains('open') ? 'translateY(0)' : 'translateY(105%)';
+    if (fsh) { fsh.style.maxWidth = r.width + 'px'; }
   } else {
     nav.style.left = ''; nav.style.width = ''; nav.style.transform = '';
     bsh.style.left = ''; bsh.style.width = ''; bsh.style.transform = '';
+    if (fsh) fsh.style.maxWidth = '';
   }
 }
 window.addEventListener('resize', fixNav);
