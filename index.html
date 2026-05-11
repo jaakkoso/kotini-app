@@ -79,7 +79,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 @keyframes pulse { 0%,100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
 
 /* ── Screen system ─────────────────── */
-.screen { display: none; flex-direction: column; height: 100dvh; will-change: transform; }
+.screen { display: none; flex-direction: column; height: 100dvh; }
 .screen.active { display: flex; animation: slideIn 0.24s cubic-bezier(0.25,0.46,0.45,0.94) both; }
 .screen.active.goback { animation: slideInLeft 0.24s cubic-bezier(0.25,0.46,0.45,0.94) both; }
 @keyframes slideIn     { from { opacity:0; transform: translateX(18px); } to { opacity:1; transform: translateX(0); } }
@@ -832,6 +832,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
         <div class="stat" onclick="go('kalenteri')"><i class="ti ti-checklist"></i><div class="stat-val" id="stat-tehtavat">0</div><div class="stat-lbl">avointa tehtävää</div></div>
         <div class="stat" onclick="go('kulut')"><i class="ti ti-credit-card"></i><div class="stat-val" id="stat-kulut">0 €</div><div class="stat-lbl">kulut / kk</div></div>
       </div>
+      <div class="sp4"></div>
       <div class="kotiapuri-cta" onclick="go('kotiapuri')">
         <div class="kotiapuri-cta-inner">
           <div class="kotiapuri-cta-icon"><i class="ti ti-sparkles"></i></div>
@@ -1937,9 +1938,27 @@ async function renderScreens() {
 let ANTHROPIC_KEY = null; // ladataan Supabasesta afterAuth():ssa
 
 // ── Ajankohtainen vinkki ─────────────
+// Varmuusvinkit vuodenajoittain jos API ei toimi
+const FALLBACK_TIPS = {
+  talvi: 'Tarkista lämmityslaitteiden suodattimet ja varmista että ulko-ovien tiivisteet pitävät — talvella pienetkin vuodot nostavat lämmityskuluja huomattavasti.',
+  kevät: 'Kevät on hyvä aika tarkistaa katon kunto talven jäljiltä ja puhdistaa räystäskourut lehdistä ja roskista ennen sadekautta.',
+  kesä: 'Kesäkuumuudella kannattaa tarkistaa ilmanvaihdon toiminta ja varmistaa ettei yläpohjaan kerry kosteutta.',
+  syksy: 'Ennen talvea sulje ulkovesiliitin ja tyhjennä vesiputket pakkaselta — yksikin jäätynyt putki voi aiheuttaa tuhansien eurojen vahingot.'
+};
+
 async function loadTip(force = false) {
   const el = document.getElementById('vinkki-text');
-  if (!el || !ANTHROPIC_KEY) return;
+  if (!el) return;
+
+  const m = new Date().getMonth() + 1;
+  const season = m<=2||m===12 ? 'talvi' : m<=5 ? 'kevät' : m<=8 ? 'kesä' : 'syksy';
+
+  // Jos ei API-avainta, näytä heti varmuusvinkki
+  if (!ANTHROPIC_KEY) {
+    el.textContent = FALLBACK_TIPS[season];
+    el.classList.remove('loading');
+    return;
+  }
 
   // Käytä välimuistia (1 vinkki / päivä), ellei pakoteta uutta
   const today = new Date().toDateString();
@@ -1994,7 +2013,7 @@ async function loadTip(force = false) {
       localStorage.setItem(cacheKey, tip);
     } else { throw new Error('no tip'); }
   } catch(e) {
-    el.textContent = 'Tarkista säännöllisesti ilmanvaihdon suodattimet ja tyhjennä vesilukot ennen talvea.';
+    el.textContent = FALLBACK_TIPS[season];
     el.classList.remove('loading');
   }
 }
