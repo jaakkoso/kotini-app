@@ -886,12 +886,46 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   </div>
   <div class="divider"></div>
   <div class="pills" id="pd"><button class="pill active" onclick="pill(this,'pd')">Kaikki</button><button class="pill" onclick="pill(this,'pd')">Piirustukset</button><button class="pill" onclick="pill(this,'pd')">Kuitit</button><button class="pill" onclick="pill(this,'pd')">Ohjekirjat</button><button class="pill" onclick="pill(this,'pd')">Luvat</button><button class="pill" onclick="pill(this,'pd')">Valokuvat</button></div>
+  <!-- Piilotettu file input — tukee kuvat, kamera, tiedostot -->
+  <input type="file" id="doc-file-input" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+    multiple style="display:none" onchange="handleDocUpload(this)"/>
+
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp3"></div>
       <div id="doc-list"></div>
       <div class="sp4"></div>
+      <!-- Lisää dokumentti -palkki -->
+      <div id="doc-upload-bar" style="display:none">
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <button onclick="triggerDocUpload('file')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;background:var(--surface-container-low,#f4f3f0);border:1.5px solid var(--border,#e5e5e5);border-radius:14px;cursor:pointer;font-family:inherit">
+            <i class="ti ti-files" style="font-size:22px;color:var(--green-dark)"></i>
+            <span style="font-size:12px;font-weight:500;color:var(--text-2)">Tiedosto</span>
+          </button>
+          <button onclick="triggerDocUpload('image')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;background:var(--surface-container-low,#f4f3f0);border:1.5px solid var(--border,#e5e5e5);border-radius:14px;cursor:pointer;font-family:inherit">
+            <i class="ti ti-photo" style="font-size:22px;color:var(--blue)"></i>
+            <span style="font-size:12px;font-weight:500;color:var(--text-2)">Kuva</span>
+          </button>
+          <button onclick="triggerDocUpload('camera')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;background:var(--surface-container-low,#f4f3f0);border:1.5px solid var(--border,#e5e5e5);border-radius:14px;cursor:pointer;font-family:inherit">
+            <i class="ti ti-camera" style="font-size:22px;color:var(--amber)"></i>
+            <span style="font-size:12px;font-weight:500;color:var(--text-2)">Kamera</span>
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Kiinteä lisää-palkki alhaalla -->
+  <div style="position:sticky;bottom:0;left:0;right:0;padding:12px 16px 16px;background:var(--surface,#faf9f6);border-top:1px solid var(--border,#e5e5e5)">
+    <div id="doc-upload-progress" style="display:none;margin-bottom:8px">
+      <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+        <div id="doc-upload-progress-bar" style="height:100%;background:var(--green-dark);width:0%;transition:width 0.3s;border-radius:2px"></div>
+      </div>
+      <div id="doc-upload-status" style="font-size:12px;color:var(--text-3);margin-top:4px;text-align:center"></div>
+    </div>
+    <button onclick="toggleDocUploadBar()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--green-dark);color:white;border:none;border-radius:14px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity 0.15s" active:style="opacity:0.8">
+      <i class="ti ti-plus" style="font-size:18px"></i> Lisää dokumentti
+    </button>
   </div>
 </div>
 
@@ -1442,6 +1476,53 @@ function guessDocType(name) {
   if (n.includes('pohja'))        return 'Pohjapiirustus';
   if (n.includes('huolto'))       return 'Huoltokirja';
   return 'Dokumentti';
+}
+
+// ── Dokumenttien lataus UI ─────────────
+function toggleDocUploadBar() {
+  const bar = document.getElementById('doc-upload-bar');
+  bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+}
+
+function triggerDocUpload(mode) {
+  const input = document.getElementById('doc-file-input');
+  if (mode === 'camera') {
+    input.accept = 'image/*';
+    input.capture = 'environment';
+  } else if (mode === 'image') {
+    input.accept = 'image/*';
+    input.removeAttribute('capture');
+  } else {
+    input.accept = 'image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt';
+    input.removeAttribute('capture');
+  }
+  input.click();
+}
+
+async function handleDocUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  document.getElementById('doc-upload-bar').style.display = 'none';
+
+  const prog = document.getElementById('doc-upload-progress');
+  const progBar = document.getElementById('doc-upload-progress-bar');
+  const status = document.getElementById('doc-upload-status');
+  prog.style.display = 'block';
+
+  let done = 0;
+  for (const file of files) {
+    status.textContent = `Ladataan: ${file.name}`;
+    const doc = await uploadDocument(file);
+    done++;
+    progBar.style.width = (done / files.length * 100) + '%';
+    if (!doc) status.textContent = `Virhe: ${file.name}`;
+  }
+
+  status.textContent = `✓ ${done} tiedosto${done > 1 ? 'a' : ''} lisätty`;
+  setTimeout(() => { prog.style.display = 'none'; progBar.style.width = '0%'; }, 2000);
+
+  input.value = ''; // reset niin sama tiedosto voidaan lisätä uudelleen
+  await renderScreens(); // päivitä lista
 }
 
 // ── Kuvan pakkaus ──────────────────────
