@@ -1159,8 +1159,20 @@ function go(id, back = false) {
 }
 
 // ── Splash ──────────────────────────
+function debugShow(msg) {
+  let el = document.getElementById('debug-bar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'debug-bar';
+    el.style.cssText = 'position:fixed;bottom:80px;left:0;right:0;z-index:9999;background:rgba(0,0,0,0.8);color:#0f0;font-size:11px;font-family:monospace;padding:6px 10px;text-align:center;pointer-events:none';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+}
+
 window.addEventListener('load', () => {
-  initSupabase(); // käynnistää onAuthStateChange-kuuntelijan joka hoitaa kaiken
+  debugShow('load – URL: ' + location.search.slice(0,30) + location.hash.slice(0,30));
+  initSupabase();
 
   setTimeout(() => {
     document.getElementById('splash').classList.add('out');
@@ -1186,9 +1198,12 @@ let currentUser = null;
 let appInitDone = false; // estetään kaksoiskäynnistys OAuth-paluun jälkeen
 
 function initSupabase() {
-  supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
+    auth: { flowType: 'implicit' }
+  });
   supa.auth.onAuthStateChange(async (event, session) => {
     console.log('[Auth]', event, session ? session.user?.email : 'no session');
+    debugShow(event + (session ? ' ✓' : ' –'));
     if (event === 'PASSWORD_RECOVERY') {
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('auth-form-login').style.display    = 'none';
