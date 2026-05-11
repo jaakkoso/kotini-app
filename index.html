@@ -51,6 +51,9 @@ input, button { font-family: inherit; border: none; background: none; }
   --r-btn:        10px;
   --shadow:       0 1px 3px rgba(0,0,0,0.06);
   --t:            0.15s ease;
+  --card:         #ffffff;
+  --muted:        #9E9C90;
+  --red:          #C43A2A;
 }
 
 /* ── Base ──────────────────────────── */
@@ -1020,15 +1023,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp3"></div>
-      <div class="day-strip">
-        <div class="day-cell"><div class="day-wd">Ma</div><div class="day-num">5</div></div>
-        <div class="day-cell"><div class="day-wd">Ti</div><div class="day-num">6</div></div>
-        <div class="day-cell today"><div class="day-wd">Ke</div><div class="day-num">7</div></div>
-        <div class="day-cell"><div class="day-wd">To</div><div class="day-num">8</div></div>
-        <div class="day-cell"><div class="day-wd">Pe</div><div class="day-num">9</div></div>
-        <div class="day-cell"><div class="day-wd">La</div><div class="day-num">10</div></div>
-        <div class="day-cell"><div class="day-wd">Su</div><div class="day-num">11</div></div>
-      </div>
+      <div class="day-strip" id="cal-day-strip"></div>
       <div class="sec">Tämä kuukausi</div>
       <div id="cal-list"></div>
       <div class="sp4"></div>
@@ -1467,22 +1462,32 @@ async function loadAnthropicKey() {
 // ── Supabase data ─────────────────────
 async function loadProfileFromSupabase(userId) {
   if (!supa) return;
-  const { data } = await supa.from('profiles').select('*').eq('id', userId).single();
-  if (data) {
-    onbData = {
-      photo:    data.photo_url || null,
-      address:  data.address   || '',
-      type:     data.type      || '',
-      built:    data.built     ? String(data.built) : '',
-      area:     data.area      ? String(data.area)  : '',
-      heating:  data.heating   || '',
-      wall:     data.wall      || '',
-      water:    data.water     || '',
-      devices:  data.devices   || [],
-      docs:     data.docs      || [],
-    };
-    // Myös localStorage fallback
-    localStorage.setItem('kotini_profile', JSON.stringify(onbData));
+  try {
+    const { data, error } = await supa.from('profiles').select('*').eq('id', userId).single();
+    if (data && !error) {
+      onbData = {
+        photo:    data.photo_url || null,
+        address:  data.address   || '',
+        type:     data.type      || '',
+        built:    data.built     ? String(data.built) : '',
+        area:     data.area      ? String(data.area)  : '',
+        heating:  data.heating   || '',
+        wall:     data.wall      || '',
+        water:    data.water     || '',
+        devices:  data.devices   || [],
+        docs:     data.docs      || [],
+      };
+      // Päivitä localStorage-välimuisti
+      localStorage.setItem('kotini_profile', JSON.stringify(onbData));
+      return;
+    }
+  } catch(e) {
+    console.warn('loadProfileFromSupabase failed, trying localStorage:', e);
+  }
+  // Fallback: lue localStorage jos Supabase ei vastaa
+  const saved = localStorage.getItem('kotini_profile');
+  if (saved) {
+    try { onbData = JSON.parse(saved); } catch(e) {}
   }
 }
 
@@ -1929,8 +1934,29 @@ async function renderScreens() {
 
   // ── Kulut & Kalenteri – dynaaminen kuukausi ──
   const FI_MONTHS = ['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'];
+  const FI_WEEKDAYS_SHORT = ['Su','Ma','Ti','Ke','To','Pe','La'];
   const nowDate = new Date();
   const monthLabel = FI_MONTHS[nowDate.getMonth()] + ' ' + nowDate.getFullYear();
+
+  // ── Kalenteri – päiväkaista (kuluva viikko Ma–Su) ──
+  const dayStrip = document.getElementById('cal-day-strip');
+  if (dayStrip) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    // Etsi viikon maanantai (ISO-viikko: Ma=1)
+    const dow = today.getDay(); // 0=Su, 1=Ma...
+    const diffToMon = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(today); monday.setDate(today.getDate() + diffToMon);
+    let stripHtml = '';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const isToday = d.getTime() === today.getTime();
+      stripHtml += `<div class="day-cell${isToday?' today':''}">
+        <div class="day-wd">${FI_WEEKDAYS_SHORT[(d.getDay())]}</div>
+        <div class="day-num">${d.getDate()}</div>
+      </div>`;
+    }
+    dayStrip.innerHTML = stripHtml;
+  }
   const kulutML = document.getElementById('kulut-month-label');
   if (kulutML) kulutML.textContent = monthLabel;
   const kalML = document.getElementById('kalenteri-month-label');
@@ -2078,7 +2104,9 @@ async function loadTip(force = false) {
 
 function buildSystemPrompt() {
   const d = onbData;
-  const devs = d.devices.length ? d.devices.join(', ') : 'Ei valittuja';
+  const devs = d.devices.length
+    ? d.devices.map(x => typeof x === 'object' ? (x.name || '') : x).filter(Boolean).join(', ')
+    : 'Ei valittuja';
   const docs = d.docs.length ? d.docs.join(', ') : 'Ei lisätty';
   return `Olet Kotiapuri — älykkäs kodinhoitoassistentti joka tuntee tämän talon läpikotaisin. Vastaat aina suomeksi. Olet lämmin, käytännöllinen ja ytimekäs. Älä pahoittele tai lisää turhia varauksia.
 
@@ -2120,6 +2148,11 @@ async function sendSuggestion(btn) {
 }
 
 async function runChat(text) {
+  if (!ANTHROPIC_KEY) {
+    appendUserMsg(text);
+    appendErrMsg('Kotiapuri-avain puuttuu. Pyydä ylläpitäjää lisäämään API-avain Supabase-asetuksiin.');
+    return;
+  }
   chatBusy = true;
   document.getElementById('chat-send-btn').style.opacity = '0.4';
 
