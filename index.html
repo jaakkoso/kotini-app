@@ -201,6 +201,16 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 .hk-amount { font-size: 40px; font-weight: 800; color: white; line-height: 1; letter-spacing: -1.5px; margin-bottom: 4px; }
 .hk-sub { font-size: 13px; color: rgba(255,255,255,0.45); }
 .hk-blob { position: absolute; width: 180px; height: 180px; border-radius: 99px; background: var(--green-accent); opacity: 0.10; right: -50px; top: -50px; }
+.vahennys-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--r-card); overflow: hidden; }
+.vahennys-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.vahennys-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--green-dark); flex-shrink: 0; }
+.vahennys-title { font-size: 14px; font-weight: 600; color: var(--text-1); }
+.vahennys-sub { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.vahennys-val { font-size: 16px; font-weight: 700; color: var(--green-dark); }
+.vahennys-divider { height: 1px; background: var(--border); margin: 0 16px; }
+.vahennys-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--green-light); }
+.vahennys-total-lbl { font-size: 13px; font-weight: 600; color: var(--green-dark); }
+.vahennys-total-val { font-size: 18px; font-weight: 800; color: var(--green-dark); }
 
 /* ── Calendar ──────────────────────── */
 .day-strip { display: flex; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); padding: 10px 4px; box-shadow: var(--shadow); }
@@ -793,7 +803,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
       <div class="stat-grid">
         <div class="stat" onclick="go('laitteet')"><i class="ti ti-tool"></i><div class="stat-val" id="stat-laitteet">0</div><div class="stat-lbl">laitetta</div></div>
         <div class="stat" onclick="go('dokumentit')"><i class="ti ti-files"></i><div class="stat-val" id="stat-dokumentit">0</div><div class="stat-lbl">dokumenttia</div></div>
-        <div class="stat" onclick="go('kulut')"><i class="ti ti-receipt-2"></i><div class="stat-val accent" id="stat-vahennys">0 €</div><div class="stat-lbl">verovähennystä</div></div>
+        <div class="stat" onclick="go('kalenteri')"><i class="ti ti-checklist"></i><div class="stat-val" id="stat-tehtavat">0</div><div class="stat-lbl">avointa tehtävää</div></div>
         <div class="stat" onclick="go('kulut')"><i class="ti ti-credit-card"></i><div class="stat-val" id="stat-kulut">0 €</div><div class="stat-lbl">kulut / kk</div></div>
       </div>
       <div class="kotiapuri-cta" onclick="go('kotiapuri')">
@@ -961,6 +971,31 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
       <div id="expense-list"></div>
       <div class="sp4"></div>
       <div class="add-row" onclick="openSheet()"><i class="ti ti-plus" style="font-size:18px"></i> Lisää kulu</div>
+      <div class="sp4"></div>
+      <div class="sec">Verovähennykset</div>
+      <div class="vahennys-card">
+        <div class="vahennys-row">
+          <div class="vahennys-icon"><i class="ti ti-home-eco"></i></div>
+          <div style="flex:1">
+            <div class="vahennys-title">Kotitalousvähennys</div>
+            <div class="vahennys-sub">Remontti- ja huoltotyöt, max 2 250 € / henkilö</div>
+          </div>
+          <div class="vahennys-val" id="vahennys-kotitalous">0 €</div>
+        </div>
+        <div class="vahennys-divider"></div>
+        <div class="vahennys-row">
+          <div class="vahennys-icon"><i class="ti ti-bolt"></i></div>
+          <div style="flex:1">
+            <div class="vahennys-title">Energiaremonttivähennys</div>
+            <div class="vahennys-sub">Lämmitys, eristys, ikkunat</div>
+          </div>
+          <div class="vahennys-val" id="vahennys-energia">0 €</div>
+        </div>
+        <div class="vahennys-footer">
+          <span class="vahennys-total-lbl">Yhteensä arvio</span>
+          <span class="vahennys-total-val" id="vahennys-total">0 €</span>
+        </div>
+      </div>
       <div class="sp4"></div>
     </div>
   </div>
@@ -1838,6 +1873,9 @@ async function renderScreens() {
   // ── Tehtävät (koti-näyttö) ──
   const taskCont = document.getElementById('task-list-container');
   if (taskCont) taskCont.innerHTML = emptyState('checklist', 'Ei tulevia tehtäviä.<br>Kotiapuri voi ehdottaa huoltoja.');
+  // Päivitä avoinna olevien tehtävien laskuri (0 kunnes tehtäviä tallennetaan)
+  const statTeht = document.getElementById('stat-tehtavat');
+  if (statTeht) statTeht.textContent = '0';
 }
 
 // ── Kotiapuri AI ────────────────────
