@@ -1476,23 +1476,22 @@ async function afterAuth(user) {
 }
 
 async function loadAnthropicKey() {
-  // 1. localStorage ensin (nopein, toimii offline)
+  // 1. Käyttäjän oma avain localStoragessa ylikirjoittaa jaetun
   const stored = localStorage.getItem('kotini_anthropic_key');
   if (stored) {
     ANTHROPIC_KEY = stored;
     const el = document.getElementById('api-key-status');
-    if (el) el.textContent = 'Asetettu ✓';
+    if (el) el.textContent = 'Oma avain ✓';
     return;
   }
-  // 2. Supabase settings-taulu (admin asettaa jaetun avaimen)
+  // 2. Jaettu avain Supabase settings-taulusta (ei cacheta laitteelle)
   if (!supa) return;
   try {
     const { data } = await supa.from('settings').select('value').eq('key', 'anthropic_key').maybeSingle();
     if (data?.value) {
       ANTHROPIC_KEY = data.value;
-      localStorage.setItem('kotini_anthropic_key', data.value);
       const el = document.getElementById('api-key-status');
-      if (el) el.textContent = 'Asetettu ✓';
+      if (el) el.textContent = 'Jaettu avain ✓';
     }
   } catch(e) { console.warn('API key not in settings:', e); }
 }
@@ -1924,7 +1923,7 @@ async function applyProfile() {
   }
   // Päivitä API-avain-status profiilisivulla
   const apiEl = document.getElementById('api-key-status');
-  if (apiEl) apiEl.textContent = ANTHROPIC_KEY ? 'Asetettu ✓' : 'Ei asetettu';
+  if (apiEl) apiEl.textContent = localStorage.getItem('kotini_anthropic_key') ? 'Oma avain ✓' : 'Jaettu avain ✓';
   await renderScreens();
   loadTip(); // kutsutaan aina kun profiili ladataan tai päivitetään
 }
