@@ -778,42 +778,19 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
       <div class="hero" id="hero-card">
         <img class="hero-img" id="hero-photo" style="display:none" alt="Koti"/>
         <div class="hero-label"><i class="ti ti-sparkles"></i> Tänään</div>
-        <div class="hero-title">2 tehtävää odottaa</div>
-        <div class="hero-sub" id="hero-address-sub">Viimeisin huolto 3 kk sitten</div>
-        <div class="prog-row"><span class="prog-label">Valmistumisaste</span><span class="prog-pct">68%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:68%"></div></div>
+        <div class="hero-title" id="hero-title">Tervetuloa!</div>
+        <div class="hero-sub" id="hero-address-sub">Täydennä kotiprofiilistasi</div>
         <i class="ti ti-home-2 hero-deco"></i>
       </div>
       <div class="sp4"></div>
       <div class="stat-grid">
-        <div class="stat" onclick="go('laitteet')"><i class="ti ti-tool"></i><div class="stat-val">12</div><div class="stat-lbl">laitetta</div></div>
-        <div class="stat" onclick="go('dokumentit')"><i class="ti ti-files"></i><div class="stat-val">47</div><div class="stat-lbl">dokumenttia</div></div>
-        <div class="stat" onclick="go('kulut')"><i class="ti ti-receipt-2"></i><div class="stat-val accent">320 €</div><div class="stat-lbl">verovähennystä</div></div>
-        <div class="stat" onclick="go('kulut')"><i class="ti ti-credit-card"></i><div class="stat-val">1 840 €</div><div class="stat-lbl">kulut / kk</div></div>
+        <div class="stat" onclick="go('laitteet')"><i class="ti ti-tool"></i><div class="stat-val" id="stat-laitteet">0</div><div class="stat-lbl">laitetta</div></div>
+        <div class="stat" onclick="go('dokumentit')"><i class="ti ti-files"></i><div class="stat-val" id="stat-dokumentit">0</div><div class="stat-lbl">dokumenttia</div></div>
+        <div class="stat" onclick="go('kulut')"><i class="ti ti-receipt-2"></i><div class="stat-val accent" id="stat-vahennys">0 €</div><div class="stat-lbl">verovähennystä</div></div>
+        <div class="stat" onclick="go('kulut')"><i class="ti ti-credit-card"></i><div class="stat-val" id="stat-kulut">0 €</div><div class="stat-lbl">kulut / kk</div></div>
       </div>
       <div class="sec">Tulevat tehtävät</div>
-      <div class="list-card">
-        <div class="list-row" onclick="go('kotiapuri')">
-          <div class="dot dot-red"></div><div style="flex:1"><div class="task-name">Nuohous — piippu</div><div class="task-sub">Vuosittainen · Kiinteistö</div></div>
-          <span class="badge b-red">Myöhässä</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row" onclick="go('kotiapuri')">
-          <div class="dot dot-amber"></div><div style="flex:1"><div class="task-name">IV-suodatin vaihto</div><div class="task-sub">Ilmanvaihto · 6 kk välein</div></div>
-          <span class="badge b-amber">5 pv</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row" onclick="go('kotiapuri')">
-          <div class="dot dot-green"></div><div style="flex:1"><div class="task-name">Öljypolttimen huolto</div><div class="task-sub">Lämmitys · Vuosittainen</div></div>
-          <span class="badge b-green">23 pv</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-      </div>
-      <div class="sec">Sää &amp; olosuhteet</div>
-      <div class="weather">
-        <div class="weather-top">
-          <div><div class="w-loc"><i class="ti ti-map-pin" style="font-size:10px"></i> Seinäjoki · Nyt</div><div class="w-temp">3°C</div><div class="w-desc">Pilvinen, kosteaa</div></div>
-          <i class="ti ti-cloud w-icon"></i>
-        </div>
-        <div class="alert-box"><i class="ti ti-alert-triangle"></i><p>Lämpötila laski alle 5°C — tarkista lämmitysjärjestelmä ja varmista putkiston suojaus ennen pakkasen tuloa.</p></div>
-      </div>
+      <div id="task-list-container"></div>
       <div class="sp4"></div>
       <div class="promo" onclick="go('sisustus')">
         <div style="flex:1"><div class="promo-tag">Premium</div><div class="promo-title">Sisustusideat tekoälyllä</div><div class="promo-sub">Lataa kuva, saat ehdotukset</div></div>
@@ -830,7 +807,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 <div class="screen" id="screen-laitteet">
   <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
   <div class="app-bar">
-    <div><div class="bar-title">Laitteet</div><div class="bar-sub">4 rekisteröity</div></div>
+    <div><div class="bar-title">Laitteet</div><div class="bar-sub" id="laitteet-sub">0 rekisteröity</div></div>
     <div class="bar-actions"><div class="icon-btn"><i class="ti ti-search"></i></div><div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div></div>
   </div>
   <div class="divider"></div>
@@ -838,30 +815,9 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp3"></div>
-      <button class="btn-primary"><i class="ti ti-plus"></i> Lisää laite</button>
+      <button class="btn-primary" onclick="openSheet()"><i class="ti ti-plus"></i> Lisää laite</button>
       <div class="sec">Rekisteröidyt laitteet</div>
-      <div class="list-card">
-        <div class="list-row" onclick="go('laite-detalji')">
-          <div class="dev-icon" style="color:var(--blue)"><i class="ti ti-shirt"></i></div>
-          <div style="flex:1;min-width:0"><div class="task-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Pyykinpesukone Bosch WAU28T80</div><div class="task-sub">Asennettu 2021</div></div>
-          <span class="badge b-green">OK</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row" onclick="go('kotiapuri')">
-          <div class="dev-icon" style="color:var(--amber)"><i class="ti ti-flame"></i></div>
-          <div style="flex:1;min-width:0"><div class="task-name">Öljypoltin Oilon</div><div class="task-sub">Asennettu 2018</div></div>
-          <span class="badge b-amber">Huolto</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row" onclick="go('laite-detalji')">
-          <div class="dev-icon" style="color:var(--green-accent)"><i class="ti ti-wind"></i></div>
-          <div style="flex:1;min-width:0"><div class="task-name">Ilmalämpöpumppu Daikin</div><div class="task-sub">Asennettu 2022</div></div>
-          <span class="badge b-green">OK</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row" onclick="go('laite-detalji')">
-          <div class="dev-icon" style="color:#5C9FD4"><i class="ti ti-snowflake"></i></div>
-          <div style="flex:1;min-width:0"><div class="task-name">Jääkaappi Samsung</div><div class="task-sub">Ostettu 2020</div></div>
-          <span class="badge b-green">OK</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-      </div>
+      <div id="device-list"></div>
       <div class="sp4"></div>
     </div>
   </div>
@@ -925,7 +881,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 <div class="screen" id="screen-dokumentit">
   <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
   <div class="app-bar">
-    <div><div class="bar-title">Dokumentit</div><div class="bar-sub">47 tiedostoa</div></div>
+    <div><div class="bar-title">Dokumentit</div><div class="bar-sub" id="dokumentit-sub">0 tiedostoa</div></div>
     <div class="bar-actions"><div class="icon-btn"><i class="ti ti-search"></i></div><div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div></div>
   </div>
   <div class="divider"></div>
@@ -933,38 +889,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp3"></div>
-      <div class="list-card">
-        <div class="list-row" onclick="openAI()">
-          <div class="doc-icon" style="color:var(--coral)"><i class="ti ti-file-type-pdf"></i></div>
-          <div style="flex:1"><div class="doc-name">Pohjapiirustus 2019</div><div class="doc-meta">Piirustukset · 12.3.2021</div></div>
-          <span class="badge b-green" style="font-size:9px">✦ AI</span><i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row">
-          <div class="doc-icon" style="color:var(--blue)"><i class="ti ti-photo"></i></div>
-          <div style="flex:1"><div class="doc-name">Kylpyhuoneremontti ennen</div><div class="doc-meta">Valokuvat · 4.6.2023</div></div>
-          <i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row">
-          <div class="doc-icon" style="color:var(--coral)"><i class="ti ti-file-type-pdf"></i></div>
-          <div style="flex:1"><div class="doc-name">Bosch WAU28 ohjekirja</div><div class="doc-meta">Ohjekirjat · 14.2.2021</div></div>
-          <i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row">
-          <div class="doc-icon" style="color:var(--coral)"><i class="ti ti-file-type-pdf"></i></div>
-          <div style="flex:1"><div class="doc-name">Rakennuslupa 2019</div><div class="doc-meta">Luvat · 1.1.2019</div></div>
-          <i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row">
-          <div class="doc-icon" style="color:var(--coral)"><i class="ti ti-file-type-pdf"></i></div>
-          <div style="flex:1"><div class="doc-name">Öljypolttimen kuitti</div><div class="doc-meta">Kuitit · 8.11.2022</div></div>
-          <i class="ti ti-chevron-right chev"></i>
-        </div>
-        <div class="list-row">
-          <div class="doc-icon" style="color:var(--blue)"><i class="ti ti-photo"></i></div>
-          <div style="flex:1"><div class="doc-name">Julkisivu etelästä</div><div class="doc-meta">Valokuvat · 22.8.2022</div></div>
-          <i class="ti ti-chevron-right chev"></i>
-        </div>
-      </div>
+      <div id="doc-list"></div>
       <div class="sp4"></div>
     </div>
   </div>
@@ -984,47 +909,11 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp2"></div>
-      <div class="hero-kulut"><div class="hk-blob"></div><div class="hk-label">Tämä kuukausi</div><div class="hk-amount">1 840 €</div><div class="hk-sub">Vuosiarvio 19 240 €</div></div>
+      <div class="hero-kulut"><div class="hk-blob"></div><div class="hk-label">Tämä kuukausi</div><div class="hk-amount" id="kulut-total">0 €</div><div class="hk-sub" id="kulut-vuosi">Lisää kuluja alla</div></div>
       <div class="sec">Tulevat ja maksetut</div>
-      <div class="list-card">
-        <div class="list-row" style="cursor:default">
-          <div class="exp-dot" style="background:var(--coral)"></div>
-          <div style="flex:1"><div class="exp-name">Kiinteistövero</div><div class="exp-freq">2× vuosi</div></div>
-          <div style="text-align:right"><div class="exp-amount">420 €</div><span class="badge b-red">Erääntymässä</span></div>
-        </div>
-        <div class="list-row" style="cursor:default">
-          <div class="exp-dot" style="background:var(--green-dark)"></div>
-          <div style="flex:1"><div class="exp-name">Asuntolaina</div><div class="exp-freq">kuukausittain</div></div>
-          <div style="text-align:right"><div class="exp-amount">680 €</div><span class="badge b-green">Maksettu</span></div>
-        </div>
-        <div class="list-row" style="cursor:default">
-          <div class="exp-dot" style="background:var(--amber)"></div>
-          <div style="flex:1"><div class="exp-name">Sähkö — Caruna</div><div class="exp-freq">kuukausittain</div></div>
-          <div style="text-align:right"><div class="exp-amount">210 €</div><span class="badge b-amber">12 pv</span></div>
-        </div>
-        <div class="list-row" style="cursor:default">
-          <div class="exp-dot" style="background:var(--green-accent)"></div>
-          <div style="flex:1"><div class="exp-name">Kaukolämpö — Helen</div><div class="exp-freq">kuukausittain</div></div>
-          <div style="text-align:right"><div class="exp-amount">180 €</div><span class="badge b-green">Maksettu</span></div>
-        </div>
-        <div class="list-row" style="cursor:default">
-          <div class="exp-dot" style="background:var(--blue)"></div>
-          <div style="flex:1"><div class="exp-name">Kotivakuutus — If</div><div class="exp-freq">vuosittain</div></div>
-          <div style="text-align:right"><div class="exp-amount">195 €</div><span class="badge b-blue">28 pv</span></div>
-        </div>
-        <div class="list-row" style="cursor:default">
-          <div class="exp-dot" style="background:var(--text-3)"></div>
-          <div style="flex:1"><div class="exp-name">Jätemaksu</div><div class="exp-freq">neljännesvuosi</div></div>
-          <div style="text-align:right"><div class="exp-amount">85 €</div><span class="badge b-gray">Maksettu</span></div>
-        </div>
-        <div class="list-row" style="cursor:default">
-          <div class="exp-dot" style="background:var(--text-3)"></div>
-          <div style="flex:1"><div class="exp-name">Vesi</div><div class="exp-freq">kuukausittain</div></div>
-          <div style="text-align:right"><div class="exp-amount">70 €</div><span class="badge b-gray">Maksettu</span></div>
-        </div>
-      </div>
+      <div id="expense-list"></div>
       <div class="sp4"></div>
-      <div class="add-row"><i class="ti ti-plus" style="font-size:18px"></i> Lisää kulu</div>
+      <div class="add-row" onclick="openSheet()"><i class="ti ti-plus" style="font-size:18px"></i> Lisää kulu</div>
       <div class="sp4"></div>
     </div>
   </div>
@@ -1054,57 +943,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
         <div class="day-cell"><div class="day-wd">Su</div><div class="day-num">11</div></div>
       </div>
       <div class="sec">Tämä kuukausi</div>
-      <div class="list-card">
-        <div class="cal-row" id="cr-1">
-          <div class="cal-bar" style="background:var(--coral)"></div>
-          <div class="cal-body">
-            <div class="cal-info">
-              <div class="cal-name" id="cn-1">Nuohous</div>
-              <div class="cal-sub">Piippu — vuosittainen</div>
-              <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap">
-                <span class="badge b-red" id="cl-1">Myöhässä 3 pv</span>
-                <span class="badge b-green hidden" id="cd-1">Tehty</span>
-              </div>
-            </div>
-            <div class="cal-check" id="cc-1" onclick="chk(1)"><i class="ti ti-check"></i></div>
-          </div>
-        </div>
-        <div class="cal-row" id="cr-2">
-          <div class="cal-bar" style="background:var(--amber)"></div>
-          <div class="cal-body">
-            <div class="cal-info">
-              <div class="cal-name" id="cn-2">IV-suodatin vaihto</div>
-              <div class="cal-sub">Ilmanvaihto — 6 kk välein</div>
-              <div class="cal-date"><i class="ti ti-calendar" style="font-size:12px"></i> 12.5.2025</div>
-              <span class="badge b-green hidden" id="cd-2" style="margin-top:5px;display:inline-block">Tehty</span>
-            </div>
-            <div class="cal-check" id="cc-2" onclick="chk(2)"><i class="ti ti-check"></i></div>
-          </div>
-        </div>
-        <div class="cal-row" id="cr-3">
-          <div class="cal-bar" style="background:var(--green-accent)"></div>
-          <div class="cal-body">
-            <div class="cal-info">
-              <div class="cal-name" id="cn-3">Öljypolttimen vuosihuolto</div>
-              <div class="cal-sub">Lämmitys — vuosittainen</div>
-              <div class="cal-date"><i class="ti ti-calendar" style="font-size:12px"></i> 28.5.2025</div>
-              <span class="badge b-green hidden" id="cd-3" style="margin-top:5px;display:inline-block">Tehty</span>
-            </div>
-            <div class="cal-check" id="cc-3" onclick="chk(3)"><i class="ti ti-check"></i></div>
-          </div>
-        </div>
-        <div class="cal-row" style="opacity:0.68" id="cr-4">
-          <div class="cal-bar" style="background:var(--green-accent)"></div>
-          <div class="cal-body">
-            <div class="cal-info">
-              <div class="cal-name done" id="cn-4">Kaivon vesinäyte</div>
-              <div class="cal-sub">Vesi — 3 vuotta välein</div>
-              <div style="margin-top:5px"><span class="badge b-green">Tehty 2.5.2025</span></div>
-            </div>
-            <div class="cal-check checked" id="cc-4" onclick="chk(4)"><i class="ti ti-check"></i></div>
-          </div>
-        </div>
-      </div>
+      <div id="cal-list"></div>
       <div class="sp4"></div>
     </div>
   </div>
@@ -1117,7 +956,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
   <div class="back-bar">
     <div class="back-btn" id="kotiapuri-back" onclick="go('koti',true)"><i class="ti ti-arrow-left"></i></div>
-    <div><div class="back-title">Kotiapuri</div><div class="back-sub" id="kotiapuri-sub">Koivukuja 4 · Tuntee talosi</div></div>
+    <div><div class="back-title">Kotiapuri</div><div class="back-sub" id="kotiapuri-sub">Tuntee talosi</div></div>
     <div class="icon-btn" style="margin-left:auto" onclick="resetChat()"><i class="ti ti-refresh"></i></div>
   </div>
   <div class="chat-scroll" id="chat-messages">
@@ -1816,6 +1655,77 @@ function applyProfile() {
     av.style.cssText = `background-image:url(${d.photo});background-size:cover;background-position:center;font-size:0;width:80px;height:80px;border-radius:20px;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,0.15)`;
     av.textContent = '';
   }
+  renderScreens();
+}
+
+function emptyState(icon, text) {
+  return `<div style="text-align:center;padding:40px 20px;color:var(--text-3)">
+    <i class="ti ti-${icon}" style="font-size:36px;display:block;margin-bottom:10px;opacity:0.4"></i>
+    <div style="font-size:14px">${text}</div>
+  </div>`;
+}
+
+async function renderScreens() {
+  // ── Hero ──
+  const heroTitle = document.getElementById('hero-title');
+  const heroSub   = document.getElementById('hero-address-sub');
+  if (heroTitle) heroTitle.textContent = onbData.address ? 'Kaikki kunnossa' : 'Tervetuloa!';
+  if (heroSub)   heroSub.textContent   = onbData.address ? onbData.address.split(',')[0] : 'Täydennä kotiprofiilisi';
+
+  // ── Laitteet ──
+  const devList = document.getElementById('device-list');
+  const devCount = onbData.devices ? onbData.devices.length : 0;
+  const devSub = document.getElementById('laitteet-sub');
+  if (devSub) devSub.textContent = devCount + ' rekisteröity';
+  if (devList) {
+    if (devCount === 0) {
+      devList.innerHTML = emptyState('tool', 'Ei rekisteröityjä laitteita.<br>Lisää ensimmäinen laite ylhäältä.');
+    } else {
+      devList.innerHTML = `<div class="list-card">${onbData.devices.map(dev => `
+        <div class="list-row">
+          <div class="dev-icon" style="color:var(--green-accent)"><i class="ti ti-tool"></i></div>
+          <div style="flex:1;min-width:0"><div class="task-name">${dev}</div></div>
+          <span class="badge b-green">OK</span>
+        </div>`).join('')}</div>`;
+    }
+  }
+  if (document.getElementById('stat-laitteet')) document.getElementById('stat-laitteet').textContent = devCount;
+
+  // ── Dokumentit (aidot Supabasesta) ──
+  const docList = document.getElementById('doc-list');
+  const docSub  = document.getElementById('dokumentit-sub');
+  const docStatEl = document.getElementById('stat-dokumentit');
+  if (docList) {
+    const docs = await loadDocuments();
+    const cnt = docs.length;
+    if (docSub) docSub.textContent = cnt + ' tiedostoa';
+    if (docStatEl) docStatEl.textContent = cnt;
+    if (cnt === 0) {
+      docList.innerHTML = emptyState('files', 'Ei dokumentteja vielä.<br>Lisää tärkeitä tiedostoja talteen.');
+    } else {
+      const iconFor = mime => mime && mime.startsWith('image/') ? 'photo' : 'file-type-pdf';
+      const colorFor = mime => mime && mime.startsWith('image/') ? 'var(--blue)' : 'var(--coral)';
+      const fmt = d => new Date(d).toLocaleDateString('fi-FI');
+      docList.innerHTML = `<div class="list-card">${docs.map(doc => `
+        <div class="list-row">
+          <div class="doc-icon" style="color:${colorFor(doc.mime_type)}"><i class="ti ti-${iconFor(doc.mime_type)}"></i></div>
+          <div style="flex:1;min-width:0"><div class="doc-name">${doc.name}</div><div class="doc-meta">${doc.type || 'Dokumentti'} · ${fmt(doc.created_at)}</div></div>
+          <i class="ti ti-chevron-right chev"></i>
+        </div>`).join('')}</div>`;
+    }
+  }
+
+  // ── Kulut ──
+  const expList = document.getElementById('expense-list');
+  if (expList) expList.innerHTML = emptyState('receipt-2', 'Ei kuluja vielä.<br>Lisää toistuvat kulut alla.');
+
+  // ── Kalenteri ──
+  const calList = document.getElementById('cal-list');
+  if (calList) calList.innerHTML = emptyState('calendar', 'Ei tulevia tapahtumia.<br>Lisää huoltoja ja muistutuksia.');
+
+  // ── Tehtävät (koti-näyttö) ──
+  const taskCont = document.getElementById('task-list-container');
+  if (taskCont) taskCont.innerHTML = emptyState('checklist', 'Ei tulevia tehtäviä.<br>Kotiapuri voi ehdottaa huoltoja.');
 }
 
 // ── Kotiapuri AI ────────────────────
@@ -1841,34 +1751,7 @@ DOKUMENTIT ARKISTOSSA: ${docs}
 Käytä näitä tietoja aktiivisesti vastatessasi. Viittaa laitteisiin ja rakenteisiin kun se on relevanttia. Kerro selkeästi jos ongelma vaatii ammattilaisen. Muotoile vastauksesi selkeästi — käytä lyhyitä kappaleita ja listoja tarvittaessa.`;
 }
 
-const HOUSE_SYSTEM = `Olet Kotiapuri — älykkäs kodinhoitoassistentti joka tuntee tämän talon läpikotaisin. Vastaat aina suomeksi. Olet lämmin, käytännöllinen ja ytimekäs. Älä pahoittele tai lisää turhia varauksia.
-
-TALO:
-- Osoite: Koivukuja 4, 02100 Espoo
-- Tyyppi: Omakotitalo, rakennettu 2003, 142 m², 2 kerrosta + kellari
-- Runko: Tiilinen ulkoseinä, puurakenteinen yläpohja
-- Lämmitys: Öljylämmitys (Oilon Junior Pro -poltin, öljysäiliö 3000 L)
-- Ilmanvaihto: Koneellinen poistoilmanvaihto
-
-LAITTEET:
-- Öljypoltin: Oilon Junior Pro (alkuperäinen 2003, vuosihuolto tehty 2024-09)
-- Pyykinpesukone: Bosch WAU28T80 (ostettu 2019, 9 kg, A-luokka)
-- Ilmalämpöpumppu: Daikin FTXM35R (asennettu 2021, 3,5 kW)
-- Jääkaappipakastin: Samsung RB38T775CS9 (ostettu 2020, 390 L)
-- Lämminvesivaraaja: 300 L (asennettu 2003, viimeksi tarkistettu 2023)
-
-HUOLTOHISTORIA:
-- 2024-09: Öljypolttimen vuosihuolto (Huolto Virtanen Oy, 280 €) — kaikki kunnossa
-- 2024-03: Savupiipun nuohous (Nuohooja Mäkinen, 120 €)
-- 2023-11: Vesikaton tarkistus — löydettiin pieni vuoto koillisreunassa, korjattu bitumilla (KattoExpert Oy, 450 €)
-- 2023-06: Daikin FTXM35R huolto ja suodattimien vaihto (Daikin-valtuutettu, 180 €)
-- 2022-09: Öljypolttimen vuosihuolto + suuttimen vaihto (Huolto Virtanen Oy, 320 €)
-- 2021-04: Daikin ilmalämpöpumpun asennus (LämpöAsennus Oy, 1 850 €)
-
-DOKUMENTIT ARKISTOSSA:
-Pohjapiirustus (2003), Oilon Junior Pro huolto-ohje, Bosch WAU28T80 käyttöohje, Kotivakuutus If (voimassa 5/2025–5/2026), Energiatodistus (2022, luokka C, 145 kWh/m²/a), Kauppakirja (2015)
-
-Käytä näitä tietoja aktiivisesti vastatessasi. Viittaa huoltohistoriaan ja laitteen tietoihin kun se on relevanttia. Kerro selkeästi jos ongelma vaatii ammattilaisen. Muotoile vastauksesi selkeästi — käytä lyhyitä kappaleita ja listoja tarvittaessa.`;
+// HOUSE_SYSTEM poistettu — käytetään buildSystemPrompt() joka lukee oikean käyttäjädatan
 
 let chatHistory = [];
 let chatBusy = false;
