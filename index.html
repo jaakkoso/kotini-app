@@ -1178,18 +1178,22 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 <script>
 // ── Sub-views (no bottom nav) ───────
 const SUB = new Set(['kotiapuri','sisustus','profiili','laite-detalji']);
-const calDone = {4: true};
+const calDone = {};
 
 // ── Navigate ────────────────────────
 function go(id, back = false) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active','goback'));
   const next = document.getElementById('screen-' + id);
+  if (!next) return; // bugfix: tuntematon screen-ID
   if (back) next.classList.add('goback');
   next.classList.add('active');
   document.getElementById('bottom-nav').style.display = SUB.has(id) ? 'none' : '';
   document.querySelectorAll('.nav-btn[data-n]').forEach(b => b.classList.toggle('active', b.dataset.n === id));
   const sc = next.querySelector('.screen-scroll, .chat-scroll');
   if (sc) sc.scrollTop = 0;
+  // Sulje upload-palkki kun poistutaan dokumentit-näytöltä
+  const bar = document.getElementById('doc-upload-bar');
+  if (bar && id !== 'dokumentit') bar.style.display = 'none';
 }
 
 // ── Splash ──────────────────────────
@@ -1244,6 +1248,10 @@ function initSupabase() {
       appInitDone = false;
       document.getElementById('auth-screen').style.display = 'flex';
       authTab('login');
+      // Tyhjennä lomakekentät
+      ['login-email','login-pass','reg-email','reg-pass','reg-pass2'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
     }
   });
 }
@@ -1481,7 +1489,7 @@ function guessDocType(name) {
 // ── Dokumenttien lataus UI ─────────────
 function toggleDocUploadBar() {
   const bar = document.getElementById('doc-upload-bar');
-  bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
 }
 
 function triggerDocUpload(mode) {
@@ -1685,16 +1693,16 @@ function buildOnbSummary() {
   ).join('');
 }
 
-function closeOnboarding() {
+async function closeOnboarding() {
   applyProfile();
-  saveProfileToSupabase(); // Tallenna Supabaseen
+  await saveProfileToSupabase().catch(e => console.error('Save failed:', e));
   const ov = document.getElementById('onboarding');
   ov.style.transition = 'opacity 0.45s';
   ov.style.opacity = '0';
   setTimeout(() => { ov.style.display = 'none'; ov.style.opacity = ''; }, 460);
 }
 
-function applyProfile() {
+async function applyProfile() {
   const d = onbData;
   // Splash-tekstin päivitys
   const saddr = document.querySelector('.splash-sub');
@@ -1729,7 +1737,7 @@ function applyProfile() {
     av.style.cssText = `background-image:url(${d.photo});background-size:cover;background-position:center;font-size:0;width:80px;height:80px;border-radius:20px;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,0.15)`;
     av.textContent = '';
   }
-  renderScreens();
+  await renderScreens();
 }
 
 function emptyState(icon, text) {
@@ -1770,7 +1778,8 @@ async function renderScreens() {
   const docSub  = document.getElementById('dokumentit-sub');
   const docStatEl = document.getElementById('stat-dokumentit');
   if (docList) {
-    const docs = await loadDocuments();
+    let docs = [];
+    try { docs = await loadDocuments(); } catch(e) { console.error('loadDocuments:', e); }
     const cnt = docs.length;
     if (docSub) docSub.textContent = cnt + ' tiedostoa';
     if (docStatEl) docStatEl.textContent = cnt;
@@ -2007,8 +2016,6 @@ function chk(n) {
   if (dtag) dtag.classList.toggle('hidden', !done);
   if (late) late.classList.toggle('hidden', done);
 }
-// Init task 4 as done
-document.getElementById('cc-4').classList.add('checked');
 
 // ── Fix nav on desktop ──────────────
 function fixNav() {
