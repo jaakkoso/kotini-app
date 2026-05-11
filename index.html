@@ -1983,8 +1983,6 @@ async function loadTip(force = false) {
   el.classList.add('loading');
 
   // Konteksti
-  const m = new Date().getMonth() + 1;
-  const season = m<=2||m===12 ? 'talvi' : m<=5 ? 'kevät' : m<=8 ? 'kesä' : 'syksy';
   const months = ['tammikuu','helmikuu','maaliskuu','huhtikuu','toukokuu','kesäkuu','heinäkuu','elokuu','syyskuu','lokakuu','marraskuu','joulukuu'];
   const d = onbData;
   const city = d.address ? d.address.split(',').slice(-1)[0].trim() : '';
