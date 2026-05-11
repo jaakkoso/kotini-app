@@ -1263,31 +1263,13 @@ function go(id, back = false) {
 }
 
 // ── Splash ──────────────────────────
-let splashHidden = false;
-let splashReadyAt = 0; // aikaisin hetki jolloin splash voidaan piilottaa
-
-function hideSplash() {
-  if (splashHidden) return;
-  const wait = Math.max(0, splashReadyAt - Date.now());
+window.addEventListener('load', () => {
+  initSupabase();
   setTimeout(() => {
-    if (splashHidden) return;
-    splashHidden = true;
     const sp = document.getElementById('splash');
     sp.classList.add('out');
     setTimeout(() => { sp.style.display = 'none'; }, 520);
-  }, wait);
-}
-
-window.addEventListener('load', () => {
-  splashReadyAt = Date.now() + 900; // min 900ms brändisyistä
-  initSupabase();
-  // Varmuus-timeout: piilota splash viimeistään 4s kuluttua vaikka auth ei vastaisi
-  setTimeout(() => {
-    hideSplash();
-    if (!appInitDone) {
-      document.getElementById('auth-screen').style.display = 'flex';
-    }
-  }, 4000);
+  }, 1600);
 });
 
 // ── Pills ───────────────────────────
@@ -1322,13 +1304,10 @@ function initSupabase() {
       appInitDone = true;
       currentUser = session.user;
       await afterAuth(session.user);
-      hideSplash();
     } else if (event === 'INITIAL_SESSION' && !session && !appInitDone) {
-      // Ei sessiota — piilota splash ja näytä kirjautuminen
-      hideSplash();
       setTimeout(() => {
         document.getElementById('auth-screen').style.display = 'flex';
-      }, 100);
+      }, 1700);
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       appInitDone = false;
