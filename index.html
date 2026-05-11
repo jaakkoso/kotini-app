@@ -2215,7 +2215,7 @@ async function loadTip(force = false) {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5',
         max_tokens: 100,
         system: 'Olet kokenut kiinteistöasiantuntija. Anna yksi konkreettinen, ajankohtainen vinkki omakotitaloasujalle. Huomioi vuodenaika, sijainti ja talon tiedot. Maksimissaan 2 lyhyttä lausetta. Ei emojeja. Vastaa pelkällä vinkillä, ilman johdantoa.',
         messages: [{ role: 'user', content: `Kodin tiedot: ${parts}` }]
@@ -2304,7 +2304,7 @@ async function runChat(text) {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5',
         max_tokens: 1024,
         system: buildSystemPrompt(),
         messages: chatHistory
