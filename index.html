@@ -812,12 +812,13 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   </div>
   <div class="screen-scroll pb-nav">
     <div class="pad">
-      <div class="hero" id="hero-card">
+      <div class="hero" id="hero-card" onclick="go('profiili')" style="cursor:pointer">
         <img class="hero-img" id="hero-photo" style="display:none" alt="Koti"/>
         <div class="hero-label"><i class="ti ti-sparkles"></i> Tänään</div>
         <div class="hero-title" id="hero-title">Tervetuloa!</div>
         <div class="hero-sub" id="hero-address-sub">Täydennä kotiprofiilistasi</div>
         <i class="ti ti-home-2 hero-deco"></i>
+        <div style="position:absolute;top:12px;right:12px;opacity:0.5"><i class="ti ti-pencil" style="font-size:16px;color:white"></i></div>
       </div>
       <div class="sp4"></div>
       <div class="vinkki-card" id="vinkki-card">
@@ -826,7 +827,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
           <span class="vinkki-label">Ajankohtainen vinkki</span>
           <button class="vinkki-refresh" onclick="loadTip(true)" title="Hae uusi vinkki"><i class="ti ti-refresh"></i></button>
         </div>
-        <p class="vinkki-text" id="vinkki-text">Haetaan vinkkiä…</p>
+        <p class="vinkki-text" id="vinkki-text">Tarkista säännöllisesti ilmanvaihtosuodattimet ja vesilukot — pienet huollot ehkäisevät isot korjaukset.</p>
       </div>
       <div class="sp4"></div>
       <div class="stat-grid">
@@ -1467,7 +1468,6 @@ async function afterAuth(user) {
   await loadAnthropicKey();
   if (onbData.address) {
     applyProfile();
-    loadTip(); // hae vinkki taustalla (ei await — ei hidasta lataamista)
   } else {
     document.getElementById('onboarding').style.display = 'flex';
   }
@@ -1651,7 +1651,8 @@ function triggerDropboxChooser() {
 async function handleDocUpload(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
-  document.getElementById('doc-upload-bar').style.display = 'none';
+  const uploadBar = document.getElementById('doc-upload-bar');
+  if (uploadBar) uploadBar.style.display = 'none';
 
   const prog = document.getElementById('doc-upload-progress');
   const progBar = document.getElementById('doc-upload-progress-bar');
@@ -1839,7 +1840,6 @@ function buildOnbSummary() {
 
 async function closeOnboarding() {
   applyProfile();
-  loadTip(); // hae ensimmäinen vinkki uudelle käyttäjälle
   await saveProfileToSupabase().catch(e => console.error('Save failed:', e));
   const ov = document.getElementById('onboarding');
   ov.style.transition = 'opacity 0.45s';
@@ -1883,6 +1883,7 @@ async function applyProfile() {
     av.textContent = '';
   }
   await renderScreens();
+  loadTip(); // kutsutaan aina kun profiili ladataan tai päivitetään
 }
 
 function emptyState(icon, text) {
