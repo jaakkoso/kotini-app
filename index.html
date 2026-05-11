@@ -1159,33 +1159,13 @@ function go(id, back = false) {
 }
 
 // ── Splash ──────────────────────────
-window.addEventListener('load', async () => {
-  initSupabase();
-
-  // Tarkista istunto
-  const { data: { session } } = await supa.auth.getSession();
+window.addEventListener('load', () => {
+  initSupabase(); // käynnistää onAuthStateChange-kuuntelijan joka hoitaa kaiken
 
   setTimeout(() => {
     document.getElementById('splash').classList.add('out');
     setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 520);
   }, 1600);
-
-  if (session) {
-    appInitDone = true;
-    currentUser = session.user;
-    await loadProfileFromSupabase(session.user.id);
-    await loadAnthropicKey();
-    if (onbData.address) {
-      applyProfile();
-    } else {
-      document.getElementById('onboarding').style.display = 'flex';
-    }
-  } else {
-    // Ei istuntoa — näytä auth
-    setTimeout(() => {
-      document.getElementById('auth-screen').style.display = 'flex';
-    }, 1700);
-  }
 });
 
 // ── Pills ───────────────────────────
@@ -1208,19 +1188,22 @@ let appInitDone = false; // estetään kaksoiskäynnistys OAuth-paluun jälkeen
 function initSupabase() {
   supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   supa.auth.onAuthStateChange(async (event, session) => {
+    console.log('[Auth]', event, session ? session.user?.email : 'no session');
     if (event === 'PASSWORD_RECOVERY') {
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('auth-form-login').style.display    = 'none';
       document.getElementById('auth-form-register').style.display = 'none';
       document.getElementById('auth-form-forgot').style.display   = 'none';
       document.getElementById('auth-form-newpass').style.display  = '';
-    } else if (event === 'SIGNED_IN' && session) {
+    } else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session && !appInitDone) {
+      appInitDone = true;
       currentUser = session.user;
-      // OAuth-paluu: appInitDone = false tarkoittaa että load-handleri ei vielä käynnistänyt appia
-      if (!appInitDone) {
-        appInitDone = true;
-        await afterAuth(session.user);
-      }
+      await afterAuth(session.user);
+    } else if (event === 'INITIAL_SESSION' && !session && !appInitDone) {
+      // Ei sessiota — näytä auth kirjautumisen jälkeen splash
+      setTimeout(() => {
+        document.getElementById('auth-screen').style.display = 'flex';
+      }, 1700);
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       appInitDone = false;
