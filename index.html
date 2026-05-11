@@ -512,6 +512,36 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
       <button class="auth-btn" id="login-btn" onclick="authLogin()">
         Kirjaudu sisään
       </button>
+      <div style="text-align:center; margin-top:12px">
+        <span onclick="authShowForgot()" style="font-size:13px; color:var(--text-3); cursor:pointer; text-decoration:underline; text-underline-offset:3px">Unohditko salasanasi?</span>
+      </div>
+    </div>
+
+    <!-- Unohtunut salasana -->
+    <div id="auth-form-forgot" style="display:none">
+      <div style="font-size:14px; color:var(--text-2); margin-bottom:16px; line-height:1.5">Kirjoita sähköpostiosoitteesi, niin lähetämme sinulle linkin salasanan vaihtamiseen.</div>
+      <div class="auth-label">Sähköposti</div>
+      <input class="auth-input" id="forgot-email" type="email" placeholder="sinä@esimerkki.fi" autocomplete="email"
+        onkeydown="if(event.key==='Enter') authSendReset()"/>
+      <button class="auth-btn" id="forgot-btn" onclick="authSendReset()">
+        Lähetä palautuslinkki
+      </button>
+      <div style="text-align:center; margin-top:12px">
+        <span onclick="authShowForgot(false)" style="font-size:13px; color:var(--text-3); cursor:pointer; text-decoration:underline; text-underline-offset:3px">← Takaisin kirjautumiseen</span>
+      </div>
+    </div>
+
+    <!-- Uusi salasana (recovery-tila) -->
+    <div id="auth-form-newpass" style="display:none">
+      <div style="font-size:14px; color:var(--text-2); margin-bottom:16px; line-height:1.5">Valitse uusi salasana tilillesi.</div>
+      <div class="auth-label">Uusi salasana</div>
+      <input class="auth-input" id="newpass-pass" type="password" placeholder="Vähintään 6 merkkiä" autocomplete="new-password"/>
+      <div class="auth-label">Salasana uudelleen</div>
+      <input class="auth-input" id="newpass-pass2" type="password" placeholder="••••••••" autocomplete="new-password"
+        onkeydown="if(event.key==='Enter') authSetNewPass()"/>
+      <button class="auth-btn" id="newpass-btn" onclick="authSetNewPass()">
+        Aseta uusi salasana
+      </button>
     </div>
 
     <div id="auth-form-register" style="display:none">
@@ -1336,7 +1366,15 @@ let currentUser = null;
 function initSupabase() {
   supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   supa.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
+    if (event === 'PASSWORD_RECOVERY') {
+      // Näytetään uuden salasanan lomake
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('auth-form-login').style.display    = 'none';
+      document.getElementById('auth-form-register').style.display = 'none';
+      document.getElementById('auth-form-forgot').style.display   = 'none';
+      document.getElementById('auth-form-newpass').style.display  = '';
+      document.getElementById('auth-tabs') && (document.getElementById('auth-tabs').style.display = 'none');
+    } else if (event === 'SIGNED_IN' && session) {
       currentUser = session.user;
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
@@ -1353,7 +1391,20 @@ function authTab(mode) {
   document.getElementById('tab-register').classList.toggle('active', mode === 'register');
   document.getElementById('auth-form-login').style.display    = mode === 'login'    ? '' : 'none';
   document.getElementById('auth-form-register').style.display = mode === 'register' ? '' : 'none';
+  document.getElementById('auth-form-forgot').style.display   = 'none';
+  document.getElementById('auth-form-newpass').style.display  = 'none';
   authClearMsg();
+}
+
+function authShowForgot(show = true) {
+  document.getElementById('auth-form-login').style.display   = show ? 'none' : '';
+  document.getElementById('auth-form-forgot').style.display  = show ? '' : 'none';
+  document.getElementById('auth-form-newpass').style.display = 'none';
+  authClearMsg();
+  if (show) {
+    const email = document.getElementById('login-email').value;
+    if (email) document.getElementById('forgot-email').value = email;
+  }
 }
 
 function authClearMsg() {
@@ -1408,6 +1459,38 @@ async function authRegister() {
     currentUser = data.user;
     await afterAuth(data.user);
   }
+}
+
+async function authSendReset() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { authShowErr('Kirjoita sähköpostiosoite.'); return; }
+  authClearMsg();
+  const btn = document.getElementById('forgot-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="auth-spinner"></div>';
+  const { error } = await supa.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://jaakkoso.github.io/kotini-app/'
+  });
+  btn.disabled = false; btn.textContent = 'Lähetä palautuslinkki';
+  if (error) { authShowErr(supaErrFi(error.message)); return; }
+  authShowOk('✓ Palautuslinkki lähetetty! Tarkista sähköpostisi.');
+}
+
+async function authSetNewPass() {
+  const pass  = document.getElementById('newpass-pass').value;
+  const pass2 = document.getElementById('newpass-pass2').value;
+  if (pass.length < 6)  { authShowErr('Salasanan tulee olla vähintään 6 merkkiä.'); return; }
+  if (pass !== pass2)   { authShowErr('Salasanat eivät täsmää.'); return; }
+  authClearMsg();
+  const btn = document.getElementById('newpass-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="auth-spinner"></div>';
+  const { error } = await supa.auth.updateUser({ password: pass });
+  btn.disabled = false; btn.textContent = 'Aseta uusi salasana';
+  if (error) { authShowErr(supaErrFi(error.message)); return; }
+  authShowOk('✓ Salasana vaihdettu! Kirjaudutaan sisään...');
+  setTimeout(async () => {
+    const { data: { session } } = await supa.auth.getSession();
+    if (session) { currentUser = session.user; await afterAuth(session.user); }
+  }, 1200);
 }
 
 async function authGoogle() {
