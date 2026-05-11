@@ -1617,7 +1617,7 @@ async function refreshDocList() {
     docList.innerHTML = `<div class="list-card">${docs.map(doc => `
       <div class="list-row">
         <div class="doc-icon" style="color:${colorFor(doc.mime_type)}"><i class="ti ti-${iconFor(doc.mime_type)}"></i></div>
-        <div style="flex:1;min-width:0"><div class="doc-name">${doc.name}</div><div class="doc-meta">${doc.type || 'Dokumentti'} · ${fmt(doc.created_at)}</div></div>
+        <div style="flex:1;min-width:0"><div class="doc-name">${esc(doc.name)}</div><div class="doc-meta">${esc(doc.type || 'Dokumentti')} · ${fmt(doc.created_at)}</div></div>
         <i class="ti ti-chevron-right chev"></i>
       </div>`).join('')}</div>`;
   }
@@ -1693,8 +1693,6 @@ function triggerDropboxChooser() {
 async function handleDocUpload(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
-  const uploadBar = document.getElementById('doc-upload-bar');
-  if (uploadBar) uploadBar.style.display = 'none';
 
   const prog = document.getElementById('doc-upload-progress');
   const progBar = document.getElementById('doc-upload-progress-bar');
@@ -1902,7 +1900,7 @@ async function applyProfile() {
   // App bar osoite
   if (d.address) {
     const ab = document.querySelector('.bar-sub');
-    if (ab) ab.innerHTML = `<i class="ti ti-map-pin" style="font-size:12px"></i> ${d.address.split(',')[0]}`;
+    if (ab) ab.innerHTML = `<i class="ti ti-map-pin" style="font-size:12px"></i> ${esc(d.address.split(',')[0])}`;
   }
   // Kotiapuri sub
   if (d.address) {
@@ -1971,7 +1969,7 @@ async function renderScreens() {
         return `<div class="list-row" style="cursor:pointer" onclick="openDevDetail(${devIdx})">
           <div class="dev-icon" style="color:var(--green-accent)"><i class="ti ti-tool"></i></div>
           <div style="flex:1;min-width:0">
-            <div class="task-name">${name}</div>
+            <div class="task-name">${esc(name)}</div>
             ${warrantyBadge ? `<div style="margin-top:3px">${warrantyBadge}</div>` : ''}
           </div>
           <i class="ti ti-chevron-right chev"></i>
@@ -2028,7 +2026,7 @@ async function renderScreens() {
       expList.innerHTML = `<div class="list-card">${expenses.map((exp,i) => `
         <div class="list-row">
           <div class="exp-dot" style="background:${['var(--green-accent)','var(--amber)','var(--coral)','var(--blue)'][i%4]}"></div>
-          <div style="flex:1"><div class="exp-name">${exp.name}</div><div class="exp-freq">${FREQ_FI[exp.freq]||exp.freq||''}</div></div>
+          <div style="flex:1;min-width:0"><div class="exp-name">${esc(exp.name)}</div><div class="exp-freq">${esc(FREQ_FI[exp.freq]||exp.freq||'')}</div></div>
           <div style="text-align:right">
             <div class="exp-amount">${exp.amount} €</div>
             <span class="badge ${exp.paid?'b-green':'b-gray'}" onclick="toggleExpensePaid(${exp.id})" style="cursor:pointer">${exp.paid?'Maksettu':'Avoin'}</span>
@@ -2068,7 +2066,7 @@ async function renderScreens() {
         const dateStr = t.date ? new Date(t.date).toLocaleDateString('fi-FI') : '';
         return `<div class="list-row">
           <div class="dot ${dot}"></div>
-          <div style="flex:1"><div class="task-name">${t.name}</div><div class="task-sub">${t.type||'Huolto'}${dateStr?' · '+dateStr:''}</div></div>
+          <div style="flex:1;min-width:0"><div class="task-name">${esc(t.name)}</div><div class="task-sub">${esc(t.type||'Huolto')}${dateStr?' · '+dateStr:''}</div></div>
           ${late?'<span class="badge b-red">Myöhässä</span>':''}
         </div>`;
       }).join('')}</div>`;
@@ -2094,8 +2092,8 @@ async function renderScreens() {
               ${t.done?'<i class="ti ti-check" style="font-size:13px"></i>':''}
             </div>
             <div class="cal-info">
-              <div class="cal-name${t.done?' done':''}" id="cn-${t.id}">${t.name}</div>
-              <div class="cal-sub">${t.type||'Huolto'}</div>
+              <div class="cal-name${t.done?' done':''}" id="cn-${t.id}">${esc(t.name)}</div>
+              <div class="cal-sub">${esc(t.type||'Huolto')}</div>
               <div class="cal-date"><i class="ti ti-calendar" style="font-size:12px"></i> ${dateStr}</div>
             </div>
           </div>
@@ -2368,6 +2366,7 @@ function insertBeforeEnd(el) {
 
 function resetChat() {
   chatHistory = [];
+  chatBusy = false;
   const msgs = document.getElementById('chat-messages');
   // Poista kaikki viestit paitsi pad-elementti ja chat-end
   Array.from(msgs.children).forEach(c => {
@@ -2376,11 +2375,23 @@ function resetChat() {
   // Näytä ehdotukset uudelleen
   const sugg = document.getElementById('chat-suggestions');
   if (sugg) sugg.style.display = '';
+  // Palauta lähetysnappi normaalitilaan
+  const sendBtn = document.getElementById('chat-send-btn');
+  if (sendBtn) sendBtn.style.opacity = '';
   msgs.scrollTop = 0;
 }
 
 function esc(t) {
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+// Turvallinen HTML-attribuuttiarvo (escapes myös lainausmerkit)
+function escAttr(t) {
+  return esc(t).replace(/"/g,'&quot;');
+}
+// Paikallinen päivämäärä YYYY-MM-DD muodossa (ei UTC-shift-ongelmaa)
+function localDateStr(d) {
+  d = d || new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 function mdToHtml(t) {
@@ -2516,7 +2527,7 @@ async function toggleExpensePaid(id) {
 
 // ── Lisää tehtävä ────────────────────
 function openAddTask() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   openFmod('Lisää tehtävä', `
     <div class="auth-label">Tehtävä *</div>
     <input class="auth-input" id="fd-task-name" type="text" placeholder="esim. Öljypolttimen huolto"/>
@@ -2570,16 +2581,16 @@ function openEditProfile() {
   const heats = ['Öljylämmitys','Kaukolämpö','Maalämpö','Ilmalämpöpumppu','Sähkölämmitys','Puulämmitys','Pelletti'];
   openFmod('Muokkaa profiilia', `
     <div class="auth-label">Osoite</div>
-    <input class="auth-input" id="fd-pr-addr" type="text" value="${d.address||''}" placeholder="Koivukuja 4, Espoo"/>
+    <input class="auth-input" id="fd-pr-addr" type="text" value="${escAttr(d.address)}" placeholder="Koivukuja 4, Espoo"/>
     <div class="auth-label">Asuntotyyppi</div>
     <div class="onb-pills" id="fd-pr-type" style="margin-bottom:14px">
       ${types.map(t=>`<div class="onb-pill${d.type===t?' sel':''}" data-val="${t}" onclick="fmodPill(this,'fd-pr-type')">${t}</div>`).join('')}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
       <div><div class="auth-label">Rakennusvuosi</div>
-        <input class="auth-input" id="fd-pr-built" type="number" value="${d.built||''}" placeholder="1998" min="1800" max="2030"/></div>
+        <input class="auth-input" id="fd-pr-built" type="number" value="${escAttr(d.built)}" placeholder="1998" min="1800" max="2030"/></div>
       <div><div class="auth-label">Pinta-ala m²</div>
-        <input class="auth-input" id="fd-pr-area" type="number" value="${d.area||''}" placeholder="120"/></div>
+        <input class="auth-input" id="fd-pr-area" type="number" value="${escAttr(d.area)}" placeholder="120"/></div>
     </div>
     <div class="auth-label">Lämmitysmuoto</div>
     <div class="onb-pills" id="fd-pr-heat" style="margin-bottom:4px">
@@ -2612,7 +2623,7 @@ function openApiKeyModal() {
       Liitä tähän Anthropic-tilin API-avain. Avain tallennetaan vain tähän laitteeseen, ei palvelimelle.
     </div>
     <div class="auth-label">API-avain (sk-ant-...)</div>
-    <input class="auth-input" id="fd-apikey" type="password" value="${current}" placeholder="sk-ant-api03-…" autocomplete="off"/>
+    <input class="auth-input" id="fd-apikey" type="password" value="${escAttr(current)}" placeholder="sk-ant-api03-…" autocomplete="off"/>
     ${current?'<div style="font-size:12px;color:var(--green-accent);margin-top:-8px;margin-bottom:8px">✓ Avain on jo asetettu</div>':''}
     <div style="font-size:12px;color:var(--text-3);margin-top:6px">Voit hankkia avaimen osoitteesta console.anthropic.com</div>
   `, saveApiKey, 'Tallenna avain');
@@ -2649,22 +2660,6 @@ function closeSheet() {
 // ── AI Modal ────────────────────────
 function openAI()  { document.getElementById('modal-bg').classList.add('open'); }
 function closeAI() { document.getElementById('modal-bg').classList.remove('open'); }
-
-// ── Calendar checkboxes ─────────────
-function chk(n) {
-  calDone[n] = !calDone[n];
-  const done = calDone[n];
-  const check = document.getElementById('cc-' + n);
-  const name  = document.getElementById('cn-' + n);
-  const row   = document.getElementById('cr-' + n);
-  const late  = document.getElementById('cl-' + n);
-  const dtag  = document.getElementById('cd-' + n);
-  check.classList.toggle('checked', done);
-  name.classList.toggle('done', done);
-  row.style.opacity = done ? '0.68' : '';
-  if (dtag) dtag.classList.toggle('hidden', !done);
-  if (late) late.classList.toggle('hidden', done);
-}
 
 // ── Fix nav on desktop ──────────────
 function fixNav() {
