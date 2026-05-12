@@ -849,7 +849,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
           <div class="kotiapuri-cta-icon"><i class="ti ti-sparkles"></i></div>
           <div>
             <div class="kotiapuri-cta-title">Kotiapuri</div>
-            <div class="kotiapuri-cta-sub">Kerro ongelma — tekoäly auttaa</div>
+            <div class="kotiapuri-cta-sub">Kysy kodistasi — saat vastauksen heti</div>
           </div>
         </div>
         <i class="ti ti-arrow-right kotiapuri-cta-arrow"></i>
@@ -880,7 +880,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp3"></div>
-      <button class="btn-primary" onclick="openSheet()"><i class="ti ti-plus"></i> Lisää laite</button>
+      <button class="btn-primary" onclick="openAddDevice()"><i class="ti ti-plus"></i> Lisää laite</button>
       <div class="sec">Rekisteröidyt laitteet</div>
       <div id="device-list"></div>
       <div class="sp4"></div>
@@ -982,7 +982,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
       <div class="sec">Tulevat ja maksetut</div>
       <div id="expense-list"></div>
       <div class="sp4"></div>
-      <div class="add-row" onclick="openSheet()"><i class="ti ti-plus" style="font-size:18px"></i> Lisää kulu</div>
+      <div class="add-row" onclick="openAddExpense()"><i class="ti ti-plus" style="font-size:18px"></i> Lisää kulu</div>
       <div class="sp4"></div>
       <div class="sec">Verovähennykset</div>
       <div class="vahennys-card">
@@ -1019,16 +1019,22 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 <div class="screen" id="screen-kalenteri">
 
   <div class="app-bar">
-    <div><div class="bar-title">Kalenteri</div><div class="bar-sub" id="kalenteri-month-label"></div></div>
-    <div class="bar-actions"><div class="icon-btn"><i class="ti ti-chevron-left"></i></div><div class="icon-btn"><i class="ti ti-chevron-right"></i></div><div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div></div>
+    <div><div class="bar-title">Huoltoaikataulu</div><div class="bar-sub" id="kalenteri-month-label"></div></div>
+    <div class="bar-actions"><div class="plus-btn" onclick="openAddTask()"><i class="ti ti-plus"></i></div></div>
   </div>
   <div class="divider"></div>
-  <div class="pills" id="pka"><button class="pill active" onclick="pill(this,'pka')">Kaikki</button><button class="pill" onclick="pill(this,'pka')">Huolto</button><button class="pill" onclick="pill(this,'pka')">Laskut</button><button class="pill" onclick="pill(this,'pka')">Muistutukset</button></div>
   <div class="screen-scroll pb-nav">
     <div class="pad">
       <div class="sp3"></div>
-      <div class="day-strip" id="cal-day-strip"></div>
-      <div class="sec">Tämä kuukausi</div>
+      <div id="cal-progress-bar" style="display:none;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:600;color:var(--text-2)">Tämän vuoden huollot</span>
+          <span id="cal-progress-label" style="font-size:12px;color:var(--text-3)"></span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden">
+          <div id="cal-progress-fill" style="height:100%;background:var(--green-accent);border-radius:99px;transition:width 0.4s"></div>
+        </div>
+      </div>
       <div id="cal-list"></div>
       <div class="sp4"></div>
     </div>
@@ -1050,12 +1056,12 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
       <div class="chat-welcome">
         <div class="chat-welcome-icon">🏡</div>
         <div class="chat-welcome-title">Kotiapuri</div>
-        <div class="chat-welcome-sub">Tunnen talosi — rakennustekniikan, laitteet ja huoltohistorian. Kerro ongelmasta.</div>
+        <div class="chat-welcome-sub">Tunnen talosi — laitteet, huoltohistorian ja rakenteet. Kysy mitä vain.</div>
       </div>
       <div class="chat-chips" id="chat-suggestions">
-        <button class="chat-chip" onclick="sendSuggestion(this)">Öljypolttimen merkkivalo vilkkuu punaisena</button>
+        <button class="chat-chip" onclick="sendSuggestion(this)">Mitkä huollot ovat tulossa lähiaikoina?</button>
         <button class="chat-chip" onclick="sendSuggestion(this)">Pesukone tärisee kovaa lingon aikana</button>
-        <button class="chat-chip" onclick="sendSuggestion(this)">Milloin öljypoltin pitäisi seuraavaksi huoltaa?</button>
+        <button class="chat-chip" onclick="sendSuggestion(this)">Miten voin parantaa kodin energiatehokkuutta?</button>
         <button class="chat-chip" onclick="sendSuggestion(this)">Mitä huoltoja talossani on tehty?</button>
       </div>
     </div>
@@ -1191,7 +1197,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
   <button class="nav-btn" data-n="laitteet" onclick="go('laitteet')"><i class="ti ti-tool"></i>Laitteet</button>
   <button class="nav-btn" data-n="dokumentit" onclick="go('dokumentit')"><i class="ti ti-files"></i>Dokumentit</button>
   <button class="nav-btn" data-n="kulut" onclick="go('kulut')"><i class="ti ti-receipt-2"></i>Kulut</button>
-  <button class="nav-btn" data-n="kalenteri" onclick="go('kalenteri')"><i class="ti ti-calendar"></i>Kalenteri</button>
+  <button class="nav-btn" data-n="kalenteri" onclick="go('kalenteri')"><i class="ti ti-calendar-check"></i>Aikataulu</button>
 </nav>
 
 <!-- ════════════════════════════
@@ -2097,28 +2103,72 @@ async function renderScreens() {
 
   // ── Kalenteri ──
   const calList = document.getElementById('cal-list');
+  const calProgressBar = document.getElementById('cal-progress-bar');
+  const calProgressFill = document.getElementById('cal-progress-fill');
+  const calProgressLabel = document.getElementById('cal-progress-label');
   if (calList) {
     if (!tasks.length) {
-      calList.innerHTML = emptyState('calendar', 'Ei tulevia tapahtumia.<br>Lisää huoltoja ja muistutuksia.');
+      calList.innerHTML = emptyState('calendar', 'Ei huoltoja tai muistutuksia.<br>Lisää ensimmäinen painamalla +.');
+      if (calProgressBar) calProgressBar.style.display = 'none';
     } else {
-      const sorted = [...tasks].sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
-      const barColor = t => t.type==='Lasku'?'var(--coral)':t.type==='Muistutus'?'var(--amber)':'var(--green-accent)';
-      calList.innerHTML = `<div class="list-card">${sorted.map(t => {
-        const dateStr = t.date ? new Date(t.date).toLocaleDateString('fi-FI',{day:'numeric',month:'long'}) : 'Ei päivämäärää';
-        return `<div class="cal-row" id="cr-${t.id}">
-          <div class="cal-bar" style="background:${barColor(t)}"></div>
-          <div class="cal-body">
-            <div class="cal-check${t.done?' checked':''}" id="cc-${t.id}" onclick="toggleTask(${t.id})">
-              ${t.done?'<i class="ti ti-check" style="font-size:13px"></i>':''}
+      // Progress bar: this year's tasks
+      const thisYear = new Date().getFullYear();
+      const yearTasks = tasks.filter(t => t.date && new Date(t.date).getFullYear() === thisYear);
+      if (calProgressBar && yearTasks.length) {
+        const doneCnt = yearTasks.filter(t=>t.done).length;
+        const pct = Math.round(doneCnt/yearTasks.length*100);
+        calProgressBar.style.display = 'block';
+        calProgressFill.style.width = pct + '%';
+        calProgressLabel.textContent = doneCnt + '/' + yearTasks.length + ' tehty';
+      }
+
+      const todayMs = new Date().setHours(0,0,0,0);
+      const endOfMonth = new Date(); endOfMonth.setMonth(endOfMonth.getMonth()+1); endOfMonth.setHours(0,0,0,0);
+
+      const groups = [
+        { key:'late',    label:'Myöhässä',      color:'var(--coral)',       items:[] },
+        { key:'month',   label:'Tässä kuussa',  color:'var(--amber)',       items:[] },
+        { key:'future',  label:'Tulevat',        color:'var(--green-accent)', items:[] },
+        { key:'done',    label:'Tehty',          color:'var(--text-3)',     items:[] },
+        { key:'nodate',  label:'Ilman päivää',   color:'var(--border)',     items:[] },
+      ];
+
+      tasks.forEach(t => {
+        if (t.done) { groups[3].items.push(t); return; }
+        if (!t.date) { groups[4].items.push(t); return; }
+        const dMs = new Date(t.date).setHours(0,0,0,0);
+        if (dMs < todayMs) groups[0].items.push(t);
+        else if (dMs < endOfMonth.getTime()) groups[1].items.push(t);
+        else groups[2].items.push(t);
+      });
+
+      // Sort each group by date
+      groups.forEach(g => g.items.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0)));
+
+      const barColor = t => t.done?'var(--text-3)':t.type==='Lasku'?'var(--coral)':t.type==='Muistutus'?'var(--amber)':'var(--green-accent)';
+      let html = '';
+      groups.forEach(g => {
+        if (!g.items.length) return;
+        html += `<div class="sec" style="margin-top:16px">${g.label}</div>`;
+        html += `<div class="list-card">${g.items.map(t => {
+          const dateStr = t.date ? new Date(t.date).toLocaleDateString('fi-FI',{day:'numeric',month:'long'}) : '';
+          const late = !t.done && t.date && new Date(t.date).setHours(0,0,0,0) < todayMs;
+          return `<div class="cal-row" id="cr-${t.id}">
+            <div class="cal-bar" style="background:${barColor(t)}"></div>
+            <div class="cal-body">
+              <div class="cal-check${t.done?' checked':''}" id="cc-${t.id}" onclick="toggleTask(${t.id})">
+                ${t.done?'<i class="ti ti-check" style="font-size:13px"></i>':''}
+              </div>
+              <div class="cal-info">
+                <div class="cal-name${t.done?' done':''}" id="cn-${t.id}">${esc(t.name)}</div>
+                <div class="cal-sub">${esc(t.type||'Huolto')}${late?' · <span style="color:var(--coral)">Myöhässä</span>':''}</div>
+                ${dateStr?`<div class="cal-date"><i class="ti ti-calendar" style="font-size:12px"></i> ${dateStr}</div>`:''}
+              </div>
             </div>
-            <div class="cal-info">
-              <div class="cal-name${t.done?' done':''}" id="cn-${t.id}">${esc(t.name)}</div>
-              <div class="cal-sub">${esc(t.type||'Huolto')}</div>
-              <div class="cal-date"><i class="ti ti-calendar" style="font-size:12px"></i> ${dateStr}</div>
-            </div>
-          </div>
-        </div>`;
-      }).join('')}</div>`;
+          </div>`;
+        }).join('')}</div>`;
+      });
+      calList.innerHTML = html || emptyState('calendar', 'Ei avoimia huoltoja. Hyvä tilanne!');
     }
   }
 }
@@ -2571,7 +2621,7 @@ function openAddTask() {
   const today = localDateStr();
   openFmod('Lisää tehtävä', `
     <div class="auth-label">Tehtävä *</div>
-    <input class="auth-input" id="fd-task-name" type="text" placeholder="esim. Öljypolttimen huolto"/>
+    <input class="auth-input" id="fd-task-name" type="text" placeholder="esim. Pesukoneen huolto"/>
     <div class="auth-label">Päivämäärä</div>
     <input class="auth-input" id="fd-task-date" type="date" value="${today}"/>
     <div class="auth-label">Tyyppi</div>
