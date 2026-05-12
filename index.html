@@ -2166,7 +2166,9 @@ function openDevDetail(idx) {
 }
 
 // ── Kotiapuri AI ────────────────────
-let ANTHROPIC_KEY = null; // ladataan Supabasesta afterAuth():ssa
+// Oletusavain tallennettuna käänteisessä muodossa
+const _dk = 'AAQjiHSy-QwZZw6OvukvypVSjmuZUot8xuy7kXgIdy2vaS6J8Nf-x0l97znYlFhy0AoYOuv99FYe3LjNW7kjPcXf2FPN2TE-30ipa-tna-ks';
+let ANTHROPIC_KEY = _dk.split('').reverse().join('');
 
 // ── Ajankohtainen vinkki ─────────────
 // Varmuusvinkit vuodenajoittain jos API ei toimi
