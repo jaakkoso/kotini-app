@@ -1488,20 +1488,33 @@ async function loadAnthropicKey() {
     if (el) el.textContent = 'Oma avain ✓';
     return;
   }
-  // 2. Jaettu avain Supabase settings-taulusta (ei cacheta laitteelle)
+  // 2. Jaettu avain Supabase settings-taulusta
+  // Lähetetään käyttäjän JWT eksplisiittisesti – ohittaa timing-ongelmat
   if (!supa) return;
   try {
-    const { data, error } = await supa.from('settings').select('value').eq('key', 'anthropic_key').maybeSingle();
-    if (error) { console.warn('Settings query error:', error); return; }
-    if (data?.value) {
-      ANTHROPIC_KEY = data.value;
+    const { data: sessionData } = await supa.auth.getSession();
+    const jwt = sessionData?.session?.access_token;
+    if (!jwt) { console.warn('No session JWT available for settings fetch'); return; }
+    const res = await fetch(
+      'https://gwumdjscrhikrcahakvz.supabase.co/rest/v1/settings?select=value&key=eq.anthropic_key',
+      { headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer ' + jwt,
+          'Accept': 'application/json'
+        }
+      }
+    );
+    const rows = await res.json();
+    const val = Array.isArray(rows) && rows[0]?.value;
+    if (val) {
+      ANTHROPIC_KEY = val;
       const el = document.getElementById('api-key-status');
       if (el) el.textContent = 'Jaettu avain ✓';
       console.log('Anthropic key loaded from Supabase ✓');
     } else {
-      console.warn('Anthropic key not found in settings table');
+      console.warn('Anthropic key not in settings, response:', rows);
     }
-  } catch(e) { console.warn('API key not in settings:', e); }
+  } catch(e) { console.warn('API key fetch failed:', e); }
 }
 
 // ── Supabase data ─────────────────────
@@ -2171,7 +2184,8 @@ async function loadTip(force = false) {
   const m = new Date().getMonth() + 1;
   const season = m<=2||m===12 ? 'talvi' : m<=5 ? 'kevät' : m<=8 ? 'kesä' : 'syksy';
 
-  // Jos ei API-avainta, näytä heti varmuusvinkki
+  // Jos ei API-avainta, yritetään ladata vielä kerran ennen fallbackia
+  if (!ANTHROPIC_KEY) await loadAnthropicKey();
   if (!ANTHROPIC_KEY) {
     el.textContent = FALLBACK_TIPS[season];
     el.classList.remove('loading');
@@ -2280,6 +2294,8 @@ async function sendSuggestion(btn) {
 }
 
 async function runChat(text) {
+  // Jos avain puuttuu, yritetään ladata se vielä kerran (timing-ongelma afterAuth:ssa)
+  if (!ANTHROPIC_KEY) await loadAnthropicKey();
   if (!ANTHROPIC_KEY) {
     appendUserMsg(text);
     appendErrMsg('Kotiapuri-avain puuttuu. Pyydä ylläpitäjää lisäämään API-avain Supabase-asetuksiin.');
