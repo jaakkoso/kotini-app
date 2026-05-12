@@ -798,13 +798,13 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      1 · KOTI
 ════════════════════════════════ -->
 <div class="screen active" id="screen-koti">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
   <div class="app-bar">
     <div>
       <div class="bar-title">Kotini</div>
       <div class="bar-sub" onclick="go('profiili')"><i class="ti ti-map-pin" style="font-size:12px"></i> Oma koti</div>
     </div>
     <div class="bar-actions">
+      <div class="icon-btn" onclick="go('kotiapuri')" title="Kotiapuri"><i class="ti ti-sparkles"></i></div>
       <div class="icon-btn" onclick="go('profiili')"><i class="ti ti-user"></i></div>
       <div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div>
     </div>
@@ -870,7 +870,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      2 · LAITTEET
 ════════════════════════════════ -->
 <div class="screen" id="screen-laitteet">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="app-bar">
     <div><div class="bar-title">Laitteet</div><div class="bar-sub" id="laitteet-sub">0 rekisteröity</div></div>
     <div class="bar-actions"><div class="icon-btn"><i class="ti ti-search"></i></div><div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div></div>
@@ -892,7 +892,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      3 · LAITE-DETALJI (sub)
 ════════════════════════════════ -->
 <div class="screen" id="screen-laite-detalji">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="back-bar">
     <div class="back-btn" onclick="go('laitteet',true)"><i class="ti ti-arrow-left"></i></div>
     <div><div class="back-title">Laitteen tiedot</div><div class="back-sub" id="dev-detail-sub"></div></div>
@@ -929,7 +929,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      4 · DOKUMENTIT
 ════════════════════════════════ -->
 <div class="screen" id="screen-dokumentit">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="app-bar">
     <div><div class="bar-title">Dokumentit</div><div class="bar-sub" id="dokumentit-sub">0 tiedostoa</div></div>
     <div class="bar-actions"><div class="icon-btn"><i class="ti ti-search"></i></div><div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div></div>
@@ -968,7 +968,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      5 · KULUT
 ════════════════════════════════ -->
 <div class="screen" id="screen-kulut">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="app-bar">
     <div><div class="bar-title">Kulut</div><div class="bar-sub" id="kulut-month-label"></div></div>
     <div class="bar-actions"><div class="icon-btn"><i class="ti ti-settings"></i></div><div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div></div>
@@ -1017,7 +1017,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      6 · KALENTERI
 ════════════════════════════════ -->
 <div class="screen" id="screen-kalenteri">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="app-bar">
     <div><div class="bar-title">Kalenteri</div><div class="bar-sub" id="kalenteri-month-label"></div></div>
     <div class="bar-actions"><div class="icon-btn"><i class="ti ti-chevron-left"></i></div><div class="icon-btn"><i class="ti ti-chevron-right"></i></div><div class="plus-btn" onclick="openSheet()"><i class="ti ti-plus"></i></div></div>
@@ -1039,7 +1039,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      7 · KOTIAPURI (sub)
 ════════════════════════════════ -->
 <div class="screen" id="screen-kotiapuri">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="back-bar">
     <div class="back-btn" id="kotiapuri-back" onclick="go('koti',true)"><i class="ti ti-arrow-left"></i></div>
     <div><div class="back-title">Kotiapuri</div><div class="back-sub" id="kotiapuri-sub">Tuntee talosi</div></div>
@@ -1075,7 +1075,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      8 · SISUSTUSIDEAT (sub)
 ════════════════════════════════ -->
 <div class="screen" id="screen-sisustus">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="back-bar">
     <div class="back-btn" onclick="go('koti',true)"><i class="ti ti-arrow-left"></i></div>
     <div><div class="back-title">Sisustusideat</div><div class="back-sub" style="display:flex;align-items:center;gap:6px"><span class="badge b-amber" style="font-size:9px">Premium</span> Tekoälysuunnittelu</div></div>
@@ -1103,7 +1103,7 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
      9 · PROFIILI (sub)
 ════════════════════════════════ -->
 <div class="screen" id="screen-profiili">
-  <div class="status-bar"><span class="s-time">9:41</span><div class="s-icons"><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></div></div>
+
   <div class="back-bar">
     <div class="back-btn" onclick="go('koti',true)"><i class="ti ti-arrow-left"></i></div>
     <div><div class="back-title">Profiili</div><div class="back-sub">Kotisi tiedot</div></div>
