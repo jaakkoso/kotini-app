@@ -448,6 +448,20 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 .auth-spinner { width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── PIN overlay ────────────────────── */
+.pin-overlay { position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:20px;max-width:390px;margin:0 auto; }
+.pin-icon { width:76px;height:76px;border-radius:24px;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:34px;flex-shrink:0; }
+.pin-title { font-family:'DM Serif Display',serif;font-size:24px;color:var(--text-1);text-align:center; }
+.pin-sub { font-size:14px;color:var(--text-3);text-align:center;line-height:1.55;max-width:290px; }
+.pin-input { width:100%;max-width:280px;padding:16px;text-align:center;font-size:22px;letter-spacing:10px;border:2px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text-1);outline:none;transition:var(--t);box-sizing:border-box;font-family:'DM Sans',sans-serif; }
+.pin-input:focus { border-color:var(--green-accent);background:white; }
+.pin-btn { width:100%;max-width:280px;padding:16px;background:var(--green-dark);color:white;border:none;border-radius:14px;font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:var(--t); }
+.pin-btn:active { opacity:0.87;transform:scale(0.99); }
+.pin-btn:disabled { opacity:0.5;cursor:not-allowed; }
+.pin-err { font-size:13px;color:var(--coral);text-align:center;min-height:18px; }
+.pin-warn { font-size:11px;color:var(--text-3);text-align:center;max-width:270px;line-height:1.5; }
+.pin-link { font-size:13px;color:var(--text-3);text-align:center;cursor:pointer;text-decoration:underline; }
+
 /* ── Onboarding ──────────────────────── */
 .onb-overlay { position: fixed; inset: 0; z-index: 300; background: #fff; display: flex; flex-direction: column; max-width: 390px; margin: 0 auto; }
 .onb-topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 0; flex-shrink: 0; }
@@ -1162,9 +1176,9 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
           <div style="flex:1"><div class="menu-text">Liitetyt palvelut</div><div class="menu-sub">Sähköyhtiö, pankki...</div></div>
           <i class="ti ti-chevron-right chev"></i>
         </div>
-        <div class="menu-row">
+        <div class="menu-row" onclick="openPrivacySheet()">
           <div class="menu-icon" style="background:var(--surface);color:var(--text-2)"><i class="ti ti-shield"></i></div>
-          <div style="flex:1"><div class="menu-text">Tietosuoja</div></div>
+          <div style="flex:1"><div class="menu-text">Tietosuoja ja tiedot</div><div class="menu-sub">Vie tai poista tietosi</div></div>
           <i class="ti ti-chevron-right chev"></i>
         </div>
       </div>
@@ -1187,6 +1201,36 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
 
     <div style="text-align:center;padding:20px;font-size:12px;color:var(--text-3)">Kotini v1.0.0 · © 2025 Kotini Oy</div>
   </div>
+</div>
+
+<!-- ════════════════════════════
+     PIN SETUP OVERLAY
+════════════════════════════ -->
+<div id="pin-setup-overlay" class="pin-overlay" style="display:none">
+  <div class="pin-icon">🔐</div>
+  <div class="pin-title">Suojaa kotitietosi</div>
+  <div class="pin-sub">Aseta suojauskoodi. Kaikki kotitietosi salataan tällä koodilla — kukaan muu ei pysty lukemaan niitä.</div>
+  <input class="pin-input" id="pin-setup-1" type="password" inputmode="numeric" maxlength="16" placeholder="Koodi" autocomplete="new-password"
+    onkeydown="if(event.key==='Enter')document.getElementById('pin-setup-2').focus()"/>
+  <input class="pin-input" id="pin-setup-2" type="password" inputmode="numeric" maxlength="16" placeholder="Vahvista koodi" autocomplete="new-password"
+    onkeydown="if(event.key==='Enter')pinSetupConfirm()"/>
+  <div class="pin-err" id="pin-setup-err"></div>
+  <button class="pin-btn" id="pin-setup-btn" onclick="pinSetupConfirm()">Aseta suojauskoodi</button>
+  <div class="pin-warn">⚠️ Muista tämä koodi — sitä ei voi palauttaa. Jos unohdat sen, joudut kirjoittamaan kotitiedot uudelleen.</div>
+</div>
+
+<!-- ════════════════════════════
+     PIN UNLOCK OVERLAY
+════════════════════════════ -->
+<div id="pin-unlock-overlay" class="pin-overlay" style="display:none">
+  <div class="pin-icon">🏡</div>
+  <div class="pin-title">Avaa Kotini</div>
+  <div class="pin-sub">Syötä suojauskoodisi avataksesi kotitietosi.</div>
+  <input class="pin-input" id="pin-unlock-input" type="password" inputmode="numeric" maxlength="16" placeholder="Suojauskoodi" autocomplete="current-password"
+    onkeydown="if(event.key==='Enter')pinUnlockConfirm()"/>
+  <div class="pin-err" id="pin-unlock-err"></div>
+  <button class="pin-btn" id="pin-unlock-btn" onclick="pinUnlockConfirm()">Avaa</button>
+  <div class="pin-link" onclick="pinForgot()">Unohdin suojauskoodin</div>
 </div>
 
 <!-- ════════════════════════════
@@ -1273,6 +1317,18 @@ function go(id, back = false) {
   if (sc) sc.scrollTop = 0;
   // Lazy-load dokumenttilista kun välilehti avataan
   if (id === 'dokumentit') refreshDocList();
+  // Kotiapuri: näytä ensikäyttövaroitus kerran
+  if (id === 'kotiapuri' && !localStorage.getItem('kotini_kotiapuri_ok')) {
+    setTimeout(() => {
+      openFmod('Kotiapuri lähettää tietoja', `
+        <div style="font-size:14px;color:var(--text-2);line-height:1.6">
+          <i class="ti ti-info-circle" style="color:var(--amber);font-size:20px;display:block;margin-bottom:10px"></i>
+          Kotiapuri lähettää kotitietosi (rakenne, laitteet, huoltohistoria) ulkopuoliselle AI-palvelulle vastausta varten.<br><br>
+          Tietojasi ei käytetä muuhun tarkoitukseen eikä niitä myydä eteenpäin.
+        </div>
+      `, () => { localStorage.setItem('kotini_kotiapuri_ok','1'); }, 'Ymmärsin');
+    }, 300);
+  }
 }
 
 // ── Splash ──────────────────────────
@@ -1311,6 +1367,122 @@ const SUPA_URL  = 'https://gwumdjscrhikrcahakvz.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3dW1kanNjcmhpa3JjYWhha3Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0OTk0NTQsImV4cCI6MjA5NDA3NTQ1NH0.5dUCIiuxBdOTOuFgx13BF5pIlAmAJ9T-P6rXfiEyT3M';
 let supa = null;
 let currentUser = null;
+
+// ── Salaus (AES-256-GCM + PBKDF2) ─────
+let ENC_KEY = null;
+
+async function deriveEncKey(pin, userId) {
+  const keyMat = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt: new TextEncoder().encode(userId), iterations:200000, hash:'SHA-256' },
+    keyMat, { name:'AES-GCM', length:256 }, true, ['encrypt','decrypt']
+  );
+}
+
+async function storeEncKey(key) {
+  const raw = await crypto.subtle.exportKey('raw', key);
+  sessionStorage.setItem('kotini_ek', btoa(String.fromCharCode(...new Uint8Array(raw))));
+}
+
+async function loadEncKeyFromSession() {
+  const stored = sessionStorage.getItem('kotini_ek');
+  if (!stored) return null;
+  try {
+    const raw = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+    return await crypto.subtle.importKey('raw', raw, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
+  } catch(e) { return null; }
+}
+
+async function encryptBlob(obj) {
+  if (!ENC_KEY) return null;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = await crypto.subtle.encrypt(
+    {name:'AES-GCM', iv}, ENC_KEY, new TextEncoder().encode(JSON.stringify(obj))
+  );
+  return JSON.stringify({
+    v:1,
+    iv: btoa(String.fromCharCode(...iv)),
+    d:  btoa(String.fromCharCode(...new Uint8Array(enc)))
+  });
+}
+
+async function decryptBlob(str) {
+  if (!ENC_KEY) return null;
+  try {
+    const {iv:ivB, d:dB} = JSON.parse(str);
+    const iv = Uint8Array.from(atob(ivB), c => c.charCodeAt(0));
+    const d  = Uint8Array.from(atob(dB),  c => c.charCodeAt(0));
+    const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv}, ENC_KEY, d);
+    return JSON.parse(new TextDecoder().decode(dec));
+  } catch(e) { return null; }
+}
+
+// ── PIN setup ─────────────────────────
+async function pinSetupConfirm() {
+  const p1 = document.getElementById('pin-setup-1').value;
+  const p2 = document.getElementById('pin-setup-2').value;
+  const err = document.getElementById('pin-setup-err');
+  if (p1.length < 4) { err.textContent = 'Koodin tulee olla vähintään 4 merkkiä.'; return; }
+  if (p1 !== p2)     { err.textContent = 'Koodit eivät täsmää.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('pin-setup-btn');
+  btn.disabled = true; btn.textContent = '...';
+  ENC_KEY = await deriveEncKey(p1, currentUser.id);
+  await storeEncKey(ENC_KEY);
+  document.getElementById('pin-setup-overlay').style.display = 'none';
+  // Uusi käyttäjä → suoraan onboardingiin
+  document.getElementById('onboarding').style.display = 'flex';
+  btn.disabled = false; btn.textContent = 'Aseta suojauskoodi';
+}
+
+// ── PIN unlock ────────────────────────
+let _unlockEncData = null; // väliaikainen encrypted_data avauksen ajaksi
+
+async function pinUnlockConfirm() {
+  const pin = document.getElementById('pin-unlock-input').value;
+  const err = document.getElementById('pin-unlock-err');
+  if (pin.length < 4) { err.textContent = 'Syötä suojauskoodi.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('pin-unlock-btn');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const key = await deriveEncKey(pin, currentUser.id);
+    ENC_KEY = key;
+    // Kokeile purkaa data — vahvistaa oikean koodin
+    let decrypted = null;
+    if (_unlockEncData) {
+      decrypted = await decryptBlob(_unlockEncData);
+      if (!decrypted) { ENC_KEY = null; err.textContent = 'Väärä koodi. Yritä uudelleen.'; btn.disabled = false; btn.textContent = 'Avaa'; return; }
+      onbData = decrypted;
+      localStorage.setItem('kotini_enc_profile', _unlockEncData);
+    }
+    await storeEncKey(ENC_KEY);
+    document.getElementById('pin-unlock-overlay').style.display = 'none';
+    _unlockEncData = null;
+    await loadAnthropicKey();
+    if (onbData.address) {
+      await applyProfile();
+    } else {
+      document.getElementById('onboarding').style.display = 'flex';
+    }
+  } catch(e) {
+    err.textContent = 'Virhe. Yritä uudelleen.';
+    ENC_KEY = null;
+  }
+  btn.disabled = false; btn.textContent = 'Avaa';
+}
+
+function pinForgot() {
+  if (!confirm('Jos unohdat suojauskoodin, kaikki kotitietosi poistetaan ja sinun täytyy syöttää ne uudelleen.\n\nJatketaanko?')) return;
+  // Poista salattu data, nollaa profiili
+  localStorage.removeItem('kotini_enc_profile');
+  ENC_KEY = null;
+  sessionStorage.removeItem('kotini_ek');
+  document.getElementById('pin-unlock-overlay').style.display = 'none';
+  document.getElementById('pin-setup-overlay').style.display = 'flex';
+}
 let appInitDone = false; // estetään kaksoiskäynnistys OAuth-paluun jälkeen
 
 function initSupabase() {
@@ -1476,6 +1648,31 @@ function supaErrFi(msg) {
 
 async function afterAuth(user) {
   document.getElementById('auth-screen').style.display = 'none';
+
+  // 1. Yritä ladata salausavain sessiosta (tab auki)
+  ENC_KEY = await loadEncKeyFromSession();
+
+  if (!ENC_KEY) {
+    // 2. Tarkista onko käyttäjällä jo salattua dataa Supabasessa
+    let hasEncData = false;
+    let encDataStr = null;
+    try {
+      const { data } = await supa.from('profiles').select('encrypted_data').eq('id', user.id).single();
+      if (data?.encrypted_data) { hasEncData = true; encDataStr = data.encrypted_data; }
+    } catch(e) {}
+
+    if (hasEncData) {
+      // Palaava käyttäjä — näytä PIN-avaus
+      _unlockEncData = encDataStr;
+      document.getElementById('pin-unlock-overlay').style.display = 'flex';
+    } else {
+      // Uusi käyttäjä — näytä PIN-asennus
+      document.getElementById('pin-setup-overlay').style.display = 'flex';
+    }
+    return; // afterAuth jatkuu PIN-callbackin kautta
+  }
+
+  // ENC_KEY löytyi sessiosta — lataa ja pura profiili normaalisti
   await loadProfileFromSupabase(user.id);
   await loadAnthropicKey();
   if (onbData.address) {
@@ -1526,14 +1723,29 @@ async function loadAnthropicKey() {
 // ── Supabase data ─────────────────────
 async function loadProfileFromSupabase(userId) {
   if (!supa) return;
-  // Lue ensin localStorage jotta data on heti käytettävissä
-  const localSaved = localStorage.getItem('kotini_profile');
-  let localData = null;
-  if (localSaved) { try { localData = JSON.parse(localSaved); } catch(e) {} }
 
+  // 1. Yritä ladata salattu localStorage-välimuisti
+  const encLocal = localStorage.getItem('kotini_enc_profile');
+  if (encLocal && ENC_KEY) {
+    const dec = await decryptBlob(encLocal);
+    if (dec) { onbData = dec; }
+  }
+
+  // 2. Hae Supabasesta (salattu versio ensisijaisesti)
   try {
     const { data, error } = await supa.from('profiles').select('*').eq('id', userId).single();
     if (data && !error) {
+      // Salattu data läsnä ja avain saatavilla
+      if (data.encrypted_data && ENC_KEY) {
+        const dec = await decryptBlob(data.encrypted_data);
+        if (dec) {
+          onbData = dec;
+          localStorage.setItem('kotini_enc_profile', data.encrypted_data);
+          localStorage.removeItem('kotini_profile'); // Poista vanha plaintext
+          return;
+        }
+      }
+      // Fallback: vanha plaintext-data (ennen salausta rekisteröityneet)
       onbData = {
         photo:    data.photo_url  || null,
         address:  data.address    || '',
@@ -1545,24 +1757,39 @@ async function loadProfileFromSupabase(userId) {
         water:    data.water      || '',
         devices:  data.devices    || [],
         docs:     data.docs       || [],
-        // Uudet kentät: supabasessa voi puuttua, fallback localStoragesta
-        expenses: data.expenses   || localData?.expenses || [],
-        tasks:    data.tasks      || localData?.tasks    || [],
+        expenses: data.expenses   || [],
+        tasks:    data.tasks      || [],
       };
-      localStorage.setItem('kotini_profile', JSON.stringify(onbData));
+      // Tallenna heti salattuna jos avain löytyy
+      if (ENC_KEY) await saveProfileToSupabase();
       return;
     }
   } catch(e) {
-    console.warn('loadProfileFromSupabase failed, falling back to localStorage:', e);
+    console.warn('loadProfileFromSupabase failed:', e);
   }
-  // Fallback: käytä localStoragea
-  if (localData) onbData = { ...{ expenses:[], tasks:[] }, ...localData };
 }
 
 async function saveProfileToSupabase() {
   if (!supa || !currentUser) return;
   const d = onbData;
-  // Tallenna ensin localStorage (toimii aina)
+
+  if (ENC_KEY) {
+    // Tallenna salattu versio
+    const encStr = await encryptBlob(d);
+    if (encStr) {
+      localStorage.setItem('kotini_enc_profile', encStr);
+      localStorage.removeItem('kotini_profile');
+      const { error } = await supa.from('profiles').upsert({
+        id: currentUser.id,
+        encrypted_data: encStr,
+        updated_at: new Date().toISOString()
+      });
+      if (error) console.warn('Encrypted upsert failed:', error.message);
+      return;
+    }
+  }
+
+  // Fallback: plaintext (ei suojauskoodia asetettu)
   localStorage.setItem('kotini_profile', JSON.stringify(d));
   const base = {
     id:        currentUser.id,
@@ -1578,12 +1805,11 @@ async function saveProfileToSupabase() {
     docs:      d.docs     || [],
     updated_at: new Date().toISOString()
   };
-  // Yritä tallentaa myös expenses + tasks; jos sarakkeet puuttuu, yritä ilman niitä
   const { error } = await supa.from('profiles').upsert({
     ...base, expenses: d.expenses || [], tasks: d.tasks || []
   });
   if (error) {
-    console.warn('Full upsert failed (new columns missing?), retrying base:', error.message);
+    console.warn('Full upsert failed, retrying base:', error.message);
     await supa.from('profiles').upsert(base);
   }
 }
@@ -1765,8 +1991,10 @@ async function signOut() {
   if (supa) await supa.auth.signOut();
   onbData = { photo:null, address:'', type:'', built:'', area:'', heating:'', wall:'', water:'', devices:[], docs:[], expenses:[], tasks:[] };
   localStorage.removeItem('kotini_profile');
+  localStorage.removeItem('kotini_enc_profile');
+  sessionStorage.removeItem('kotini_ek');
+  ENC_KEY = null;
   currentUser = null;
-  // Reload-näyttö
   location.reload();
 }
 
@@ -2704,6 +2932,48 @@ async function saveEditProfile() {
   closeFmod();
   await saveProfileToSupabase().catch(e=>console.error(e));
   await applyProfile();
+}
+
+// ── Tietosuoja-sheet ─────────────────
+function openPrivacySheet() {
+  const hasEnc = !!localStorage.getItem('kotini_enc_profile') || !!ENC_KEY;
+  openFmod('Tietosuoja ja tiedot', `
+    <div style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:20px">
+      <b style="color:var(--text-1)">Missä tietosi ovat?</b><br>
+      Kotitietosi tallennetaan ${hasEnc
+        ? '<span style="color:var(--green-accent);font-weight:600">salattuna</span> — kukaan muu ei pysty lukemaan niitä, edes me.'
+        : 'pilvipalveluun. Voit lisätä salauksen kirjautumalla ulos ja takaisin sisään.'}<br><br>
+      <b style="color:var(--text-1)">Kotiapuri</b><br>
+      Kun käytät Kotiapuria, valitsemasi kotitiedot lähetetään ulkopuoliselle AI-palvelulle analyysiä varten. Tietoja ei käytetä muuhun tarkoitukseen.
+    </div>
+    <button class="btn-outline" style="margin-bottom:10px" onclick="closeFmod();exportMyData()"><i class="ti ti-download"></i> Lataa omat tietoni (JSON)</button>
+    <button class="btn-outline" style="border-color:var(--coral);color:var(--coral)" onclick="closeFmod();deleteMyData()"><i class="ti ti-trash"></i> Poista kaikki tietoni</button>
+  `, null, null, true);
+}
+
+async function exportMyData() {
+  const data = JSON.stringify(onbData, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'kotini-tiedot.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+async function deleteMyData() {
+  if (!confirm('Haluatko varmasti poistaa kaikki kotitietosi? Tätä ei voi peruuttaa.')) return;
+  // Poista Supabasesta
+  if (supa && currentUser) {
+    await supa.from('profiles').delete().eq('id', currentUser.id);
+  }
+  // Poista paikallisesti
+  localStorage.removeItem('kotini_profile');
+  localStorage.removeItem('kotini_enc_profile');
+  sessionStorage.removeItem('kotini_ek');
+  ENC_KEY = null;
+  // Kirjaudu ulos
+  await signOut();
 }
 
 // ── API-avain (Kotiapuri) ────────────
