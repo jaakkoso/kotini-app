@@ -2073,7 +2073,9 @@ async function extractDocument(file) {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
+        // Sonnet lukee piirustusten mitat ja pienen tekstin selvästi Haikua tarkemmin.
+        // Luku tehdään vain kerran per dokumentti, joten kustannus on kertaluontoinen.
+        model: 'claude-sonnet-5',
         max_tokens: 2000,
         messages: [{ role:'user', content: [ block, { type:'text', text: DOC_EXTRACT_PROMPT } ] }]
       })
