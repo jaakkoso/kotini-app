@@ -971,6 +971,15 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
         </div>
         <div id="doc-upload-status" style="font-size:12px;color:var(--text-3);margin-top:4px;text-align:center"></div>
       </div>
+      <!-- Jälkiluku: dokumentit jotka ladattiin ennen lukuominaisuutta -->
+      <div id="doc-extract-banner" style="display:none;align-items:center;gap:10px;background:var(--green-light);border:1px solid rgba(78,158,106,0.25);border-radius:12px;padding:12px 14px;margin-top:12px">
+        <i class="ti ti-book" style="font-size:18px;color:var(--green-accent);flex-shrink:0"></i>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text-1)" id="doc-extract-label">Lukemattomia dokumentteja</div>
+          <div style="font-size:11px;color:var(--text-3)">Kotiapuri osaa vastata niistä lukemisen jälkeen</div>
+        </div>
+        <button id="doc-extract-btn" onclick="extractPendingDocs()" style="background:var(--green-dark);color:white;border:none;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;flex-shrink:0">Lue</button>
+      </div>
       <div class="sec">Dokumentit</div>
       <div id="doc-list"></div>
       <div class="sp4"></div>
@@ -1073,10 +1082,10 @@ body { font-family: 'DM Sans', sans-serif; background: #DDD9D0; color: var(--tex
         <div class="chat-welcome-sub">Tunnen talosi — laitteet, huoltohistorian ja rakenteet. Kysy mitä vain.</div>
       </div>
       <div class="chat-chips" id="chat-suggestions">
+        <button class="chat-chip" onclick="sendSuggestion(this)">Mitä dokumenteistani löytyy talostani?</button>
         <button class="chat-chip" onclick="sendSuggestion(this)">Mitkä huollot ovat tulossa lähiaikoina?</button>
         <button class="chat-chip" onclick="sendSuggestion(this)">Pesukone tärisee kovaa lingon aikana</button>
-        <button class="chat-chip" onclick="sendSuggestion(this)">Miten voin parantaa kodin energiatehokkuutta?</button>
-        <button class="chat-chip" onclick="sendSuggestion(this)">Mitä huoltoja talossani on tehty?</button>
+        <button class="chat-chip" onclick="sendSuggestion(this)">Paljonko kodin kulut ovat vuodessa?</button>
       </div>
     </div>
     <div id="chat-end" style="height:16px"></div>
@@ -1840,6 +1849,17 @@ async function uploadDocument(file) {
   return doc;
 }
 
+// Lataa + lukee dokumentin yhdellä kertaa
+async function uploadAndReadDocument(file, onStatus) {
+  const doc = await uploadDocument(file);
+  if (!doc) return null;
+  if (onStatus) onStatus(`Luetaan: ${file.name}`);
+  // Luetaan alkuperäisestä tiedostosta (parempi tarkkuus kuin pakatusta)
+  const extract = await extractAndSaveDoc(doc.id, file);
+  if (extract) doc.extract = ENC_KEY ? await encryptBlob(extract) : JSON.stringify(extract);
+  return doc;
+}
+
 async function loadDocuments() {
   if (!supa || !currentUser) return [];
   const { data } = await supa.from('documents')
@@ -1860,18 +1880,43 @@ async function refreshDocList() {
   const cnt = docs.length;
   if (docSub) docSub.textContent = cnt + ' tiedostoa';
   if (docStatEl) docStatEl.textContent = cnt;
+  // Pura tiivistelmät muistiin — Kotiapuri käyttää näitä
+  docExtracts = [];
+  for (const doc of docs) {
+    const ex = await readDocExtract(doc);
+    if (ex) docExtracts.push({ ...ex, _tiedosto: doc.name });
+  }
+
+  // Lukemattomat dokumentit → tarjoa jälkiluku
+  const unread = docs.filter(d => !d.extract && d.mime_type &&
+    (d.mime_type.startsWith('image/') || d.mime_type === 'application/pdf')).length;
+  const banner = document.getElementById('doc-extract-banner');
+  if (banner) {
+    banner.style.display = unread ? 'flex' : 'none';
+    const lbl = document.getElementById('doc-extract-label');
+    if (lbl) lbl.textContent = `${unread} dokumentti${unread === 1 ? '' : 'a'} lukematta`;
+  }
+
   if (cnt === 0) {
     docList.innerHTML = emptyState('files', 'Ei dokumentteja vielä.<br>Lisää tärkeitä tiedostoja talteen.');
   } else {
     const iconFor  = mime => mime && mime.startsWith('image/') ? 'photo' : 'file-type-pdf';
     const colorFor = mime => mime && mime.startsWith('image/') ? 'var(--blue)' : 'var(--coral)';
     const fmt = d => new Date(d).toLocaleDateString('fi-FI');
-    docList.innerHTML = `<div class="list-card">${docs.map(doc => `
-      <div class="list-row">
+    const rows = await Promise.all(docs.map(async doc => {
+      const ex = await readDocExtract(doc);
+      const title = ex?.otsikko || doc.name;
+      const sub   = ex?.tyyppi  || doc.type || 'Dokumentti';
+      return `<div class="list-row">
         <div class="doc-icon" style="color:${colorFor(doc.mime_type)}"><i class="ti ti-${iconFor(doc.mime_type)}"></i></div>
-        <div style="flex:1;min-width:0"><div class="doc-name">${esc(doc.name)}</div><div class="doc-meta">${esc(doc.type || 'Dokumentti')} · ${fmt(doc.created_at)}</div></div>
+        <div style="flex:1;min-width:0">
+          <div class="doc-name">${esc(title)}</div>
+          <div class="doc-meta">${esc(sub)} · ${fmt(doc.created_at)}${ex ? ' · <span style="color:var(--green-accent)">luettu</span>' : ''}</div>
+        </div>
         <i class="ti ti-chevron-right chev"></i>
-      </div>`).join('')}</div>`;
+      </div>`;
+    }));
+    docList.innerHTML = `<div class="list-card">${rows.join('')}</div>`;
   }
 }
 
@@ -1954,17 +1999,146 @@ async function handleDocUpload(input) {
   let done = 0;
   for (const file of files) {
     status.textContent = `Ladataan: ${file.name}`;
-    const doc = await uploadDocument(file);
+    const doc = await uploadAndReadDocument(file, msg => { status.textContent = msg; });
     done++;
     progBar.style.width = (done / files.length * 100) + '%';
     if (!doc) status.textContent = `Virhe: ${file.name}`;
   }
 
-  status.textContent = `✓ ${done} tiedosto${done > 1 ? 'a' : ''} lisätty`;
+  status.textContent = `✓ ${done} tiedosto${done > 1 ? 'a' : ''} lisätty ja luettu`;
   setTimeout(() => { prog.style.display = 'none'; progBar.style.width = '0%'; }, 2000);
 
   input.value = ''; // reset niin sama tiedosto voidaan lisätä uudelleen
   await refreshDocList(); // päivitä lista
+}
+
+// ══════════════════════════════════════
+// DOKUMENTTIÄLY — Claude lukee dokumentit
+// ══════════════════════════════════════
+// Puretut dokumenttitiivistelmät muistissa. Täytetään refreshDocList():ssa.
+let docExtracts = [];
+
+const DOC_EXTRACT_PROMPT = `Luet kodin dokumentteja. Analysoi tämä dokumentti ja palauta VAIN JSON-objekti, ei mitään muuta tekstiä, ei koodilohkoja.
+
+{
+  "tyyppi": "Pohjapiirustus | Rakennuspiirustus | LVI-kuva | Sähkökuva | Energiatodistus | Vakuutuskirja | Kauppakirja | Lasku | Kuitti | Käyttöohje | Huoltoraportti | Isännöitsijäntodistus | Muu",
+  "otsikko": "lyhyt kuvaava nimi suomeksi",
+  "tiivistelma": "2-3 lausetta siitä mitä dokumentti kertoo",
+  "avaintiedot": { "avain": "arvo" },
+  "teksti": "kaikki olennainen dokumentista luettava teksti, numerot ja mitat"
+}
+
+avaintiedot: poimi konkreettiset faktat — mitat, pinta-alat, huonekorkeudet, eristepaksuudet, vuosiluvut, päivämäärät, euromäärät, sopimus- ja laitenumerot, mallimerkinnät, materiaalit. Käytä suomenkielisiä avaimia.
+Jos kyseessä on rakennuspiirustus, lue huoneiden nimet ja mitat sekä rakennekerrokset mahdollisimman tarkasti.
+Jos et saa jostain kohdasta selvää, jätä se pois — älä arvaa.
+Vastaa suomeksi.`;
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+
+// Lukee dokumentin Clauden vision/PDF-tuella ja palauttaa jäsennellyn objektin
+async function extractDocument(file) {
+  if (!ANTHROPIC_KEY) await loadAnthropicKey();
+  if (!ANTHROPIC_KEY) return null;
+
+  const isPdf = file.type === 'application/pdf';
+  const isImg = file.type && file.type.startsWith('image/');
+  if (!isPdf && !isImg) return null;   // doc/xls ym. ohitetaan toistaiseksi
+
+  let block;
+  try {
+    if (isImg) {
+      // 1568px on Clauden vision-tarkkuuden makeimmalla alueella
+      const blob = await compressImage(file, 1568, 0.85) || file;
+      block = { type:'image', source:{ type:'base64', media_type:'image/jpeg', data: await blobToBase64(blob) } };
+    } else {
+      if (file.size > 25 * 1024 * 1024) return null; // 32MB request-katto
+      block = { type:'document', source:{ type:'base64', media_type:'application/pdf', data: await blobToBase64(file) } };
+    }
+  } catch(e) { console.warn('extractDocument: tiedoston luku epäonnistui', e); return null; }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 2000,
+        messages: [{ role:'user', content: [ block, { type:'text', text: DOC_EXTRACT_PROMPT } ] }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) { console.warn('extractDocument API-virhe:', data.error); return null; }
+    let txt = data.content?.[0]?.text || '';
+    // Poista mahdolliset koodilohkomerkinnät
+    txt = txt.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/,'').trim();
+    const obj = JSON.parse(txt);
+    return obj && typeof obj === 'object' ? obj : null;
+  } catch(e) {
+    console.warn('extractDocument epäonnistui:', e);
+    return null;
+  }
+}
+
+// Lukee dokumentin ja tallentaa tiivistelmän salattuna
+async function extractAndSaveDoc(docId, file) {
+  const obj = await extractDocument(file);
+  if (!obj || !supa) return null;
+  try {
+    const payload = ENC_KEY ? await encryptBlob(obj) : JSON.stringify(obj);
+    const { error } = await supa.from('documents').update({ extract: payload }).eq('id', docId);
+    if (error) {
+      // Yleisin syy: extract-saraketta ei ole vielä lisätty tietokantaan
+      console.warn('extract-sarakkeeseen tallennus epäonnistui:', error.message,
+        '→ aja: ALTER TABLE documents ADD COLUMN IF NOT EXISTS extract TEXT;');
+    }
+  } catch(e) { console.warn('extract-tallennus epäonnistui:', e); }
+  return obj;
+}
+
+// Purkaa dokumenttiriville tallennetun tiivistelmän
+async function readDocExtract(doc) {
+  if (!doc.extract) return null;
+  try {
+    if (ENC_KEY) {
+      const dec = await decryptBlob(doc.extract);
+      if (dec) return dec;
+    }
+    return JSON.parse(doc.extract); // salaamaton fallback
+  } catch(e) { return null; }
+}
+
+// Lukee jälkikäteen kaikki dokumentit joita ei ole vielä luettu
+async function extractPendingDocs() {
+  const btn = document.getElementById('doc-extract-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Luetaan…'; }
+  let docs = [];
+  try { docs = await loadDocuments(); } catch(e) {}
+  const pending = docs.filter(d => !d.extract && d.mime_type &&
+    (d.mime_type.startsWith('image/') || d.mime_type === 'application/pdf'));
+  let n = 0;
+  for (const doc of pending) {
+    try {
+      const { data: blob } = await supa.storage.from('documents').download(doc.file_path);
+      if (!blob) continue;
+      const file = new File([blob], doc.name, { type: doc.mime_type });
+      if (await extractAndSaveDoc(doc.id, file)) n++;
+      if (btn) btn.innerHTML = `<i class="ti ti-loader"></i> Luetaan… ${n}/${pending.length}`;
+    } catch(e) { console.warn('jälkiluku epäonnistui:', doc.name, e); }
+  }
+  if (btn) { btn.disabled = false; }
+  await refreshDocList();
 }
 
 // ── Kuvan pakkaus ──────────────────────
@@ -2141,8 +2315,25 @@ async function closeOnboarding() {
   setTimeout(() => { ov.style.display = 'none'; ov.style.opacity = ''; }, 460);
 }
 
+// Lataa dokumenttitiivistelmät muistiin ilman DOM-päivitystä.
+// Kotiapuri tarvitsee nämä myös jos käyttäjä ei käy Dokumentit-välilehdellä.
+async function loadDocExtracts() {
+  if (!supa || !currentUser) return;
+  try {
+    const docs = await loadDocuments();
+    const out = [];
+    for (const doc of docs) {
+      const ex = await readDocExtract(doc);
+      if (ex) out.push({ ...ex, _tiedosto: doc.name });
+    }
+    docExtracts = out;
+  } catch(e) { console.warn('loadDocExtracts:', e); }
+}
+
 async function applyProfile() {
   const d = onbData;
+  // Dokumenttiarkisto Kotiapurin käyttöön (taustalla, ei blokkaa)
+  loadDocExtracts();
   // Splash-tekstin päivitys
   const saddr = document.querySelector('.splash-sub');
   if (saddr && d.address) saddr.textContent = d.address;
@@ -2528,13 +2719,23 @@ async function loadTip(force = false) {
   }
 }
 
+// Rakentaa system-promptin lohkoina. Vakaa osa ensin + cache_control,
+// muuttuva osa (päivämäärä) vasta katkaisukohdan jälkeen — muuten välimuisti ei osu.
 function buildSystemPrompt() {
   const d = onbData;
   const devs = d.devices.length
     ? d.devices.map(x => typeof x === 'object' ? (x.name || '') : x).filter(Boolean).join(', ')
     : 'Ei valittuja';
-  const docs = d.docs.length ? d.docs.join(', ') : 'Ei lisätty';
-  return `Olet Kotiapuri — älykkäs kodinhoitoassistentti joka tuntee tämän talon läpikotaisin. Vastaat aina suomeksi. Olet lämmin, käytännöllinen ja ytimekäs. Älä pahoittele tai lisää turhia varauksia.
+
+  // Talon perustiedot + kulut + tehtävät
+  const openTasks = (d.tasks || []).filter(t => !t.done)
+    .map(t => `${t.name}${t.date ? ' (' + t.date + ')' : ''}`).join(', ') || 'Ei avoimia';
+  const doneTasks = (d.tasks || []).filter(t => t.done)
+    .map(t => `${t.name}${t.date ? ' (' + t.date + ')' : ''}`).join(', ') || 'Ei merkintöjä';
+  const expenses = (d.expenses || [])
+    .map(e => `${e.name} ${e.amount} € (${e.freq || ''})`).join(', ') || 'Ei kirjattuja';
+
+  let stable = `Olet Kotiapuri — kodinhoidon assistentti joka tuntee tämän talon läpikotaisin. Vastaat aina suomeksi. Olet lämmin, käytännöllinen ja ytimekäs. Älä pahoittele tai lisää turhia varauksia.
 
 TALO:
 - Osoite: ${d.address || 'Ei annettu'}
@@ -2545,9 +2746,34 @@ TALO:
 
 LAITTEET: ${devs}
 
-DOKUMENTIT ARKISTOSSA: ${docs}
+TEHDYT HUOLLOT: ${doneTasks}
+AVOIMET TEHTÄVÄT: ${openTasks}
+KIRJATUT KULUT: ${expenses}`;
 
-Käytä näitä tietoja aktiivisesti vastatessasi. Viittaa laitteisiin ja rakenteisiin kun se on relevanttia. Kerro selkeästi jos ongelma vaatii ammattilaisen. Muotoile vastauksesi selkeästi — käytä lyhyitä kappaleita ja listoja tarvittaessa.`;
+  // Dokumenttiarkiston sisältö — tämä on se mikä tekee vastauksista tarkkoja
+  if (docExtracts.length) {
+    stable += `\n\nDOKUMENTTIARKISTO — sinulla on pääsy näiden dokumenttien sisältöön:\n`;
+    docExtracts.forEach((ex, i) => {
+      stable += `\n[${i + 1}] ${ex.otsikko || ex._tiedosto || 'Dokumentti'} (${ex.tyyppi || 'Dokumentti'})\n`;
+      if (ex.tiivistelma) stable += `${ex.tiivistelma}\n`;
+      if (ex.avaintiedot && typeof ex.avaintiedot === 'object') {
+        const kv = Object.entries(ex.avaintiedot)
+          .map(([k, v]) => `${k}: ${v}`).join('; ');
+        if (kv) stable += `Avaintiedot: ${kv}\n`;
+      }
+      if (ex.teksti) stable += `Sisältö: ${String(ex.teksti).slice(0, 1500)}\n`;
+    });
+    stable += `\nKun vastaat dokumenttien perusteella, kerro mistä dokumentista tieto on peräisin. Jos tietoa ei löydy arkistosta, sano se suoraan äläkä arvaa.`;
+  } else {
+    stable += `\n\nDOKUMENTTIARKISTO: tyhjä. Jos käyttäjä kysyy talon tarkkoja mittoja, rakenteita tai sopimusehtoja, kerro että hän voi lisätä rakennuskuvat ja muut paperit Dokumentit-välilehdellä, jolloin osaat vastata niistä täsmällisesti.`;
+  }
+
+  stable += `\n\nKäytä näitä tietoja aktiivisesti. Viittaa laitteisiin, rakenteisiin ja dokumentteihin kun se on relevanttia. Kerro selkeästi jos ongelma vaatii ammattilaisen. Muotoile vastaus lyhyiksi kappaleiksi ja listoiksi.`;
+
+  return [
+    { type: 'text', text: stable, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: `Tänään on ${localDateStr()}.` }
+  ];
 }
 
 // HOUSE_SYSTEM poistettu — käytetään buildSystemPrompt() joka lukee oikean käyttäjädatan
@@ -2608,6 +2834,16 @@ async function runChat(text) {
     });
     const data = await res.json();
     document.getElementById(typingId)?.remove();
+
+    // Välimuistin osumat näkyviin — jos cache_read pysyy nollassa, prefix ei ole vakaa
+    if (data.usage) {
+      console.log('Kotiapuri usage:', {
+        input: data.usage.input_tokens,
+        cache_luotu: data.usage.cache_creation_input_tokens,
+        cache_osuma: data.usage.cache_read_input_tokens,
+        output: data.usage.output_tokens
+      });
+    }
 
     if (data.content?.[0]?.text) {
       const reply = data.content[0].text;
